@@ -1,0 +1,14 @@
+{
+  "name": "kingyo-game",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node test/logic.test.js && node test/sprites.test.js && node test/tasks.test.js",
+    "build": "node tools/build.js",
+    "dev": "python3 -m http.server 8000",
+    "soak": "node tools/soak.js"
+  },
+  "devDependencies": {
+    "esbuild": "0.24.2"
+  }
+}

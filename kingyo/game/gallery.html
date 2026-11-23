@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>金魚の最期としぐさ 見本</title>
+<style>
+  /* VOICE: 展示ケースのラベル。とぼけた最期を、標本のように淡々と並べる
+     IDEA: 水族館の小さな水槽が壁一面に並ぶ展示
+     PICTURE: 実際のゲーム画面24個がそれぞれ最期を再生し続ける
+     COLOUR and TYPE: 水槽の濃い緑の壁にオレンジ。札はクリーム。M PLUS Rounded 1c
+     LAYOUT: 見出し→切り替え→水槽の格子。押すと大きく見られる */
+  :root { color-scheme: light dark; --bg: light-dark(#e9f3ef, #102624); --wall: light-dark(#1d4d4a, #0b1c1b); --ink: light-dark(#173b39, #dff3ee);
+    --card: light-dark(#fff8e6, #183533); --sub: light-dark(#4b6b68, #9cc2bc); --or: #f0862e; --red: #d9534a; }
+  :root[data-theme=light] { color-scheme: light } :root[data-theme=dark] { color-scheme: dark }
+  * { box-sizing: border-box; min-width: 0 }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.55 "M PLUS Rounded 1c", system-ui, "Hiragino Sans", "Yu Gothic", sans-serif; overflow-x: clip }
+  header { padding: clamp(20px, 3vw, 40px) max(4vw, 16px) 8px; max-width: 1400px; margin: 0 auto }
+  h1 { font-size: clamp(28px, 4vw, 44px); line-height: 1.1; margin: 0 0 6px; text-wrap: balance }
+  header p { margin: 0; color: var(--sub); max-width: 62ch }
+  .tabs { display: flex; flex-wrap: wrap; gap: 8px; padding: 16px max(4vw, 16px) 4px; max-width: 1400px; margin: 0 auto }
+  .tabs button { font: inherit; font-weight: 700; min-height: 44px; padding: 0 18px; border-radius: 999px; border: 2px solid var(--wall); background: transparent; color: var(--ink); cursor: pointer }
+  .tabs button[aria-pressed=true] { background: var(--wall); color: #fff8e6 }
+  .tabs button:focus-visible, .tank:focus-visible { outline: 3px solid var(--or); outline-offset: 3px }
+  main { padding: 16px max(4vw, 16px) 48px; max-width: 1400px; margin: 0 auto }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(168px, 1fr)); gap: 18px }
+  .tank { all: unset; cursor: pointer; display: flex; flex-direction: column; background: var(--wall); border-radius: 14px; padding: 8px; box-shadow: 0 4px 0 rgba(0,0,0,.25) }
+  .tank canvas { width: 100%; aspect-ratio: 2/3; image-rendering: pixelated; border-radius: 6px; display: block; background: #5fcfb8 }
+  .label { display: flex; gap: 8px; align-items: baseline; padding: 8px 4px 2px; color: #fff8e6 }
+  .no { font-weight: 800; color: var(--or); font-variant-numeric: tabular-nums; flex: none }
+  .nm { font-weight: 700; font-size: 15px; line-height: 1.3 }
+  .how { color: #a9cfc8; font-size: 13px; line-height: 1.4; padding: 0 4px 4px }
+  .big { position: fixed; inset: 0; background: rgba(8,20,19,.82); display: none; align-items: center; justify-content: center; padding: 16px; z-index: 5 }
+  .big.on { display: flex }
+  .big .box { background: var(--wall); border-radius: 18px; padding: 12px; display: flex; flex-direction: column; gap: 8px; max-height: 100%; }
+  .big canvas { height: min(78vh, 720px); aspect-ratio: 2/3; image-rendering: pixelated; border-radius: 8px; display: block }
+  .big .label { padding: 0 4px }
+  .big button { font: inherit; font-weight: 700; min-height: 44px; border-radius: 10px; border: 0; background: #fff8e6; color: #173b39; cursor: pointer }
+  .note { color: var(--sub); font-size: 13px; margin-top: 24px }
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700;800&display=swap">
+</head>
+<body>
+<header>
+  <h1>金魚の最期 36種と、ふれあい・しぐさ</h1>
+  <p>ゲーム本体と同じ演出を、水槽ごとにくり返し再生しています。最期は、ぽちゃんと入る→最期→網で回収→札まで。しぐさは、ひまなときに金魚がするものです。押すと大きく見られます。</p>
+</header>
+<div class="tabs" role="group" aria-label="絞り込み">
+  <button id="t-all" aria-pressed="true">すべて 73</button>
+  <button id="t-sudden" aria-pressed="false">育成途中の突然死 20</button>
+  <button id="t-ending" aria-pressed="false">満タン時の結末 16</button>
+  <button id="t-touch" aria-pressed="false">ふれあい・芸 12</button>
+  <button id="t-gesture" aria-pressed="false">しぐさ・お客さん 25</button>
+</div>
+<main>
+  <div class="grid" id="grid"></div>
+  <p class="note">見本では事故を必ず起こしています。突然死の確率は企画書の約2倍に上げています（書いてある％が今の値）。</p>
+</main>
+<div class="big" id="big" role="dialog" aria-modal="true" aria-label="拡大表示">
+  <div class="box"><canvas id="bigcv" width="160" height="240"></canvas><div class="label"><span class="no" id="bno"></span><span class="nm" id="bnm"></span></div><div class="how" id="bhow"></div><button id="close">閉じる</button></div>
+</div>
+<script type="module" src="src/gallery.js"></script>
+<script type="module">
+{
+  const HOW = {
+    instant: '登場 8％。ぽちゃんの直後に裏返る。', poison: '餌 1％。怪しい粒まで素直に飲む。', frozen: '餌 1％。氷のかけらで自分が凍る。',
+    flower: '餌 1％。種が発芽して頭に花。', burnt: '餌 1％。火を吹いて自分も焦げる。', shock: '餌 1％。電気を帯びた異物をかじる。',
+    sucked: '掃除 2.5％。ノズルに汚れごと吸われる。', overpolished: '掃除 2.5％。色まで落ちて真っ白。', cat: '撫でる 5％。上に猫の手。',
+    bird: 'ジャンプ 5％。戻らず、羽が一枚。', dizzy: '回転 5％。目を回して逆さま。', bubblegone: '泡 5％。割れた後に目だけ落ちる。',
+    floataway: '膨らむ 5％。戻らず浮いていく。', netted: '網 5％。いつもは逃げるのに。',
+    stuck: 'しぐさ「ガラスにごつん」8％。勢いあまって刺さる。', hiccupfly: 'しぐさ「しゃっくり」8％。最後の一発で昇天。',
+    knotted: 'しぐさ「しっぽ追い」8％。回りすぎて結び目に。', flat: 'しぐさ「くしゃみ」8％。反動でガラスにぺたん。',
+    nowake: 'しぐさ「うたた寝」8％。魂が抜けていく。', overhere: 'しぐさ「のぞきこむ」8％。顔が迫って、こっち側へ。',
+    bug: '満タン時 1〜5％。連打で上がる。', duck: '磨き13回以上・ふれあい5回以下。', moss: '満タン時に汚れ最大。', stone: '満タン時にストレス75以上。',
+    split: 'ふれあい2回以下。', skeleton: '遊泳時間の半分以上が空腹。', overeat: '食事13回以上（せまいと二択）。', cramped: '食事13回以上（食べすぎと二択）。',
+    fishman: 'ふれあい13回以上。', oldage: 'どれにも当てはまらない。',
+    dragon: '餌8・ふれあい8・磨き4回以上、ストレス30以下、汚れ1以下。', golden: 'ストレスが一度も50を超えず、空腹ゼロ、汚れゼロ（餌6・磨き3回以上）。',
+    bald: 'ストレスが100に達したことがある。', hermit: '生きた魚に網を5回以上入れた。',
+    idol: 'ふれあい9〜12回、気分に3回以上応え、満タン時のストレス10以下。', round: '遊泳時間の半分以上が満腹。'
+  };
+  const grid = document.getElementById('grid');
+  const games = []; window.__games = games;
+  const GEST = [
+    ['g:swim', '泳ぎ回る', 'ダッシュ・ジグザグ・宙返り・水面・底を気ままに。振り返るときは一度こちらを向く。'],
+    ['g:feed', 'もぐもぐ', '真ん中まで落ちた粒にぱくっ。ほっぺをふくらませて噛んでから、ごっくん。'],
+    ['g:look', 'こっちを見る', '正面を向いて、キラキラ目でにっこり。'], ['g:yawn', '大あくび', '伸びをして、涙目。'],
+    ['g:hiccup', 'しゃっくり', 'ひっく、で跳ねて泡がぽこっ。'], ['g:sneeze', 'くしゃみ', '水槽が汚れていると出やすい。'],
+    ['g:bubbles', '泡ぷくぷく', 'ほっぺをためて、泡を3つ。'], ['g:tail', 'しっぽ追い', '自分の尾を追ってぐるぐる、目が回る。'],
+    ['g:bonk', 'ガラスにごつん', '勢いあまってぶつかり、涙目。'], ['g:nibble', '水草かじり', 'もぐもぐ、舌ぺろ。'],
+    ['g:nap', 'うたた寝', '底でzzz、はっと起きる。おなかいっぱいだと出やすい。'], ['g:dance', 'ごきげんダンス', 'ストレスが低いと出やすい。'],
+    ['g:peek', 'のぞきこむ', 'ガラスに顔を近づけて、まばたき。'], ['g:showoff', 'ドヤ宙返り', 'くるっと回ってドヤ顔。'],
+    ['g:tongue', 'あっかんべー', 'こっちを向いて舌ぺろ。'], ['g:hungry', 'おなかすいた', '水面で口パク、涙目。腹ぺこだと出やすい。'],
+    ['g:nervous', 'そわそわ', '汗をかいて行ったり来たり。ストレスが高いと出やすい。'],
+    ['g:dig', '砂掘り（下）', '砂をほじくって、ときどき宝物（コイン・貝殻・ヒトデ・王冠）。見つけた物は底に残る。'],
+    ['g:pebble', '小石の模様替え（下）', '小石をくわえて運び、コトンと置く。'],
+    ['g:bubbleride', '泡のエレベーター（下）', 'エアストーンの泡の柱に乗って、くるくる上へ。'],
+    ['g:sandhide', '砂にもぐる（下）', '砂にもぐって目だけ出し、ばっと飛び出す。'],
+    ['g:roll', 'ごろごろ（下）', '砂の上でごろんごろん。'],
+    ['g:visit-snail', 'お客さん：巻貝', 'ガラスを這う巻貝をのぞきこむ。近づくと殻にひっこむ。'],
+    ['g:visit-crab', 'お客さん：カニ', '砂の上のカニに近づいて…チョキン。'],
+    ['g:visit-shrimp', 'お客さん：エビ', 'ぴょんぴょん跳ねるエビを追いかける。'],
+  ];
+  const TOUCH = [
+    ['g:t-pet', '撫でる', '指で頭をなでなで。'], ['g:t-jump', 'ジャンプ', '水面の上の指先に、跳んでタッチ。'],
+    ['g:t-spin', '回転', '指が円を描くと、ついてくるりと一回転。'], ['g:t-bubble', '泡をつつく', '指先から出た泡を追いかけてつつく。'],
+    ['g:t-puff', '膨らむ', 'お腹をつんっ、ぷくっ。'], ['g:t-refuse', 'そっぽ', 'ふれあいばかり続くと飽きて、ぷいっ。'],
+    ['g:t-hoop', '輪くぐり（芸）', '指のOKサインの輪を、すいっとくぐる。'], ['g:t-deadplay', '死んだふり（芸）', 'つんつん…ジャーン！'],
+    ['g:t-handstand', '逆立ち（芸）', '底で逆立ちして尾をふりふり。指が拍手。'], ['g:t-highfive', 'ハイタッチ（芸）', '跳び上がって尾で指にパチッ。'],
+    ['g:t-ball', 'ボール遊び（芸）', '指が落としたボールを鼻でリフティング。'], ['g:t-kiss', 'ちゅっ（芸）', '指先にキスして、ハートがふわふわ。'],
+  ];
+  const ITEMS = GoldfishLogic.CAUSES.map(c => ({ id: c.id, name: c.name, kind: c.kind, how: HOW[c.id] || '' }))
+    .concat(TOUCH.map(([id, name, how]) => ({ id, name, kind: 'touch', how })))
+    .concat(GEST.map(([id, name, how]) => ({ id, name, kind: 'gesture', how })));
+  ITEMS.forEach((c, i) => {
+    const b = document.createElement('button');
+    b.className = 'tank'; b.dataset.kind = c.kind; b.setAttribute('aria-label', c.name + 'を拡大');
+    b.innerHTML = `<canvas width="160" height="240"></canvas><span class="label"><span class="no">${String(i + 1).padStart(2, '0')}</span><span class="nm">${c.name}</span></span><span class="how">${c.how}</span>`;
+    grid.appendChild(b);
+    // 再生の開始をずらす
+    setTimeout(() => games.push(GoldfishGame.mount(b.querySelector('canvas'), { demo: c.id })), i * 120);
+    b.addEventListener('click', () => openBig(c, i));
+  });
+  let bigGame = null;
+  const big = document.getElementById('big');
+  function openBig(c, i) {
+    if (bigGame) bigGame.stop();
+    const old = document.getElementById('bigcv'), cv = old.cloneNode(); old.replaceWith(cv);
+    bigGame = GoldfishGame.mount(cv, { demo: c.id });
+    document.getElementById('bno').textContent = String(i + 1).padStart(2, '0');
+    document.getElementById('bnm').textContent = c.name;
+    document.getElementById('bhow').textContent = c.how;
+    big.classList.add('on'); document.getElementById('close').focus();
+  }
+  function closeBig() { big.classList.remove('on'); if (bigGame) { bigGame.stop(); bigGame = null; } }
+  document.getElementById('close').addEventListener('click', closeBig);
+  big.addEventListener('click', e => { if (e.target === big) closeBig(); });
+  window.addEventListener('keydown', e => { if (e.key === 'Escape') closeBig(); });
+  const tabs = { all: null, sudden: 'sudden', ending: 'ending', touch: 'touch', gesture: 'gesture' };
+  Object.keys(tabs).forEach(k => document.getElementById('t-' + k).addEventListener('click', () => {
+    Object.keys(tabs).forEach(j => document.getElementById('t-' + j).setAttribute('aria-pressed', j === k));
+    grid.querySelectorAll('.tank').forEach(t => { t.style.display = !tabs[k] || t.dataset.kind === tabs[k] ? '' : 'none'; });
+  }));
+}
+</script>
+</body>
+</html>

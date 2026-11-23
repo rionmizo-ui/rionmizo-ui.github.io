@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>きんぎょのさいご</title>
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; height: 100%; background: #20383a; font-family: system-ui, "Hiragino Sans", "Yu Gothic", sans-serif; }
+  body { display: flex; align-items: center; justify-content: center; user-select: none; -webkit-user-select: none; touch-action: manipulation; }
+  .device {
+    width: min(96vw, 440px); padding: 18px 18px 22px; border-radius: 28px 28px 56px 28px;
+    background: linear-gradient(160deg, #ffb25a, #f0862e 60%, #d9701f);
+    box-shadow: 0 10px 0 #a7531a, 0 18px 40px rgba(0,0,0,.45), inset 0 2px 0 rgba(255,255,255,.4);
+    position: relative;
+  }
+  .top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; color: #5a2a08; }
+  .brand { font-weight: 800; letter-spacing: .08em; font-size: 15px; }
+  .led { width: 9px; height: 9px; border-radius: 50%; background: #7cf08a; box-shadow: 0 0 6px #7cf08a; display: inline-block; margin-right: 6px; }
+  #screenwrap { background: #1d4d4a; border-radius: 14px; padding: 10px; display: flex; justify-content: center; box-shadow: inset 0 3px 8px rgba(0,0,0,.5); }
+  canvas { image-rendering: pixelated; image-rendering: crisp-edges; display: block; background: #5fcfb8; border-radius: 4px; }
+  .btn { border: none; cursor: pointer; font-weight: 800; color: #4a2208; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+         background: radial-gradient(circle at 35% 30%, #fff6dc, #f4dca4 60%, #d9b878); box-shadow: 0 5px 0 #9c6a2a, 0 7px 10px rgba(0,0,0,.3); transition: transform .05s; }
+  .btn.down, .btn:active { transform: translateY(4px); box-shadow: 0 1px 0 #9c6a2a; }
+  .btn .ic { font-size: 20px; line-height: 1; }
+  .btn .lb { font-size: 11px; }
+  .row { display: flex; justify-content: space-around; margin-top: 18px; }
+  .row .btn { width: 76px; height: 76px; border-radius: 50%; }
+  .net { width: 58px; height: 38px; border-radius: 12px; flex-direction: row; gap: 4px; }
+  .net .ic { font-size: 16px; }
+  .bgm { border: none; cursor: pointer; font: 700 11px system-ui, sans-serif; padding: 5px 9px; border-radius: 999px; background: #fff3d0; color: #6a3a10; box-shadow: 0 2px 0 #9c6a2a; margin-left: auto; margin-right: 10px; }
+  .bgm.off { background: #d9c7a3; color: #8a6a40; }
+  .hint { color: #b9d8cf; text-align: center; font-size: 11px; margin-top: 14px; opacity: .8; }
+  @media (max-height: 700px) { .row .btn { width: 64px; height: 64px; } .row { margin-top: 12px; } }
+</style>
+</head>
+<body>
+<div>
+  <div class="device">
+    <div class="top">
+      <div class="brand"><span class="led"></span>KINGYO</div>
+      <button id="bgmbtn" class="bgm" aria-label="BGMのオン・オフ">♪ BGM</button>
+      <button class="btn net" data-btn="net" aria-label="網"><span class="ic">🥅</span><span class="lb">網</span></button>
+    </div>
+    <div id="screenwrap"><canvas id="screen" width="160" height="240"></canvas></div>
+    <div class="row">
+      <button class="btn" data-btn="feed" aria-label="餌"><span class="ic">🍙</span><span class="lb">餌</span></button>
+      <button class="btn" data-btn="clean" aria-label="掃除"><span class="ic">🧽</span><span class="lb">掃除</span></button>
+      <button class="btn" data-btn="touch" aria-label="ふれあい"><span class="ic">🫳</span><span class="lb">ふれあい</span></button>
+    </div>
+  </div>
+  <div class="hint">キーボード: 1 / 2 / 3 = 餌・掃除・ふれあい　4 or スペース = 網</div>
+</div>
+<script type="module" src="src/main.js"></script>
+</body>
+</html>
