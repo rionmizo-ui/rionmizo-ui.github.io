@@ -62,7 +62,7 @@ var GoldfishLogic = (function () {
     ['squashed',     'カメにつぶされた', 'sudden', 'sink'],
     ['loach',        'まねして抜けなくなった', 'sudden', 'gone'],
     ['catfish',      'ナマズにのまれた', 'sudden', 'gone'],    // ナマズ（v20）
-    ['cleanfreak',   '潔癖すぎた',       'sudden', 'float'],
+    ['kicked',       'エビにけられた',   'sudden', 'sink'],    // v23.3 エビ
     ['bug',          'バグった',         'ending', 'float'],
     ['duck',         'アヒルに交代',     'ending', 'gone'],
     ['moss',         'コケまみれ',       'ending', 'sink'],
@@ -107,14 +107,14 @@ var GoldfishLogic = (function () {
     { id: 'oldage',   w: 0.005, test: () => true },                                                                 // 受け皿
   ];
 
-  const VISIT_ACC = { crab: 'haircut', turtle: 'squashed', loach: 'loach', catfish: 'catfish' };   // v22
+  const VISIT_ACC = { crab: 'haircut', turtle: 'squashed', loach: 'loach', catfish: 'catfish', shrimp: 'kicked' };   // v22
   const GESTURE_ACC = { bonk: 'stuck', hiccup: 'hiccupfly', tail: 'knotted', sneeze: 'flat', nap: 'nowake' };   // v22: のぞきこむ（peek）の事故「こっち側に来た」はなくした
   // 突然死の確率（企画書の約2倍に引き上げ。企画書の値は P_SPEC）
   // v18: 突然死29種がなるべく同じくらいずつ出るように見直し（シミュレーションと自動プレイで確認）
   //  登場即死 8→2%、餌の事故 各1→0.4%、掃除 吸い込み3→6%・磨きすぎ2→1.2%、網 5→6%、しぐさ 8→20%
   //  ふれあいの事故は反応ごと（TOUCH_P）。撫でる(猫)は反応が出やすいぶん低め、ジャンプ・膨らむは高め
   const P = { instant: 0.02, feedEach: 0.004, cleanEach: 0.12, overpolish: 0.012, touch: 0.12, net: 0.06, gesture: 0.18, visit: 0.22 };   // v23 P6：ひと休み中は事故が起きないぶん、しぐさ 8→18%・お客さん 12→22%。掃除の吸い込み 6→12%（一度も出ていなかった）   // v22: お客さん 15→12%（なかよしの出番をふやす）   // v20: しぐさ 20→8%・お客さん 30→15%（出会う回数がふえたぶん下げた。idle_sim2.js と自動プレイで調整）
-  const TOUCH_P = { cat: 0.053, bird: 0.098, dizzy: 0.075, bubblegone: 0.09, floataway: 0.105, knotted: 0.068, nowake: 0.09, star: 0.068, cleanfreak: 0.075, rocketBird: 0.075 };   // v23 P6：芸を20→15種に減らしたぶん（死ぬ芸に当たる回数が約1.33倍）、全部を0.75倍に
+  const TOUCH_P = { cat: 0.053, bird: 0.098, dizzy: 0.075, bubblegone: 0.09, floataway: 0.105, knotted: 0.068, nowake: 0.09, star: 0.068, rocketBird: 0.075 };   // v23 P6：芸を20→15種に減らしたぶん（死ぬ芸に当たる回数が約1.33倍）、全部を0.75倍に
   const P_SPEC = { instant: 0.05, feedEach: 0.005, cleanEach: 0.0125, touch: 0.025, net: 0.025, gesture: 0.03 };
   const GROW_SEC = 6;     // v20: のんびり成長。放置で泳いでいると6秒ごとにゲージ+1（idle_sim2.js の最適値）
   const HUNGER_SEC = 5;    // 通常遊泳で腹持ちが1粒分減る秒数（企画書10秒。お腹を空きやすく）
@@ -335,7 +335,6 @@ var GoldfishLogic = (function () {
         const roll = accId ? rng() : 1;
         const firstChance = TOUCH_P[accId] || P.touch;
         let accident = roll < firstChance ? accId : null;
-        if (!accident && reaction === 'pet' && roll < firstChance + TOUCH_P.cleanfreak) accident = 'cleanfreak';
         if (!accident && reaction === 'rocket' && roll < firstChance + TOUCH_P.rocketBird) accident = 'bird';
         pendTouch = { hungry: false };
         return { hungry: false, reaction, accident };

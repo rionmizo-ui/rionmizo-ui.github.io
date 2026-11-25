@@ -103,7 +103,6 @@
     white: { B: '#f8fafc', D: '#d4dce2', L: '#ffffff', P: '#eef2f6', F: '#ffffff', W: '#ffffff', K: FK },
     frozen: { B: '#d8a07a', D: '#b07c60', L: '#ecc4a4', P: '#f0d8c4', F: '#dca888', W: '#e8f8ff', K: '#3a3a5a', M: '#e07070', ML: '#f0a0a0' },
     burnt: { B: '#d8883a', D: '#7a3a14', L: '#eaa45a', P: '#e8b070', F: '#d07a30', W: '#ffffff', K: FK, M: '#e0402a' },
-    stone: { B: '#9a948a', D: '#77716a', L: '#ada79c', P: '#c2bcb0', F: '#a49e94', W: '#b8b2a6', K: '#4a4640', M: '#b0aaa0', ML: '#c8c2b8', MS: '#5a5650' },
     poison: { B: '#9a4ad0', D: '#6e2ea4', L: '#c08ae8', P: '#f0c8a0', F: '#ff8a00', W: '#ffffff', K: FK },
     gaunt: { B: '#e8964a', D: '#c07038', L: '#f4b87a', P: '#f4d4b0', F: '#e0904a', W: '#ffffff', K: FK },
     xray: { B: '#1c2c5a', D: '#14204a', L: '#2a3e74', P: '#22346a', F: '#1a2a58', W: '#9fe8ff', K: '#bff4ff', M: '#3a5a9a', ML: '#5a7ab8', MS: '#bff4ff' },
@@ -329,13 +328,13 @@
   // ================= v23：ユーザーが描いた「最終の見た目」の画像（assets/*.png を build2.js が埋め込む） =================
   // face：画像の顔の向き（1=右 / -1=左）。ax,ay：(x,y) に合わせる点（0..1）。recolor：金魚の色ちがいを作るか
   var ASSET_INFO = {
-    // v23 P5c：変身のコマ表（8コマ。1コマ目＝ふつうの金魚、ax/ay＝1コマ目の体の中心）。end：ふだんは最後のコマを描く
+    // v23 P5c：変身のコマ表（v23.2 から6コマ。1コマ目＝ふつうの金魚、ax/ay＝1コマ目の体の中心）。end：ふだんは最後のコマを描く
     giant: { face: -1, ax: 0.593, ay: 0.578, recolor: 1, frames: 6, end: 1 },
     overeat: { face: -1, ax: 0.577, ay: 0.506, recolor: 1, frames: 6, end: 1 },
     fishman: { face: -1, ax: 0.581, ay: 0.533, recolor: 1, frames: 6, end: 1 },
     split: { face: -1, ax: 0.556, ay: 0.475, recolor: 1, frames: 6, end: 1 },
-    dragon: { face: -1, ax: 0.555, ay: 0.541, recolor: 1, frames: 6, end: 1 },
     possessed_ghost: { face: -1, ax: 0.571, ay: 0.565, recolor: 1, frames: 6, end: 1 },
+    dragon: { face: -1, ax: 0.555, ay: 0.541, recolor: 1, frames: 6, end: 1 },
     skeleton: { face: -1, ax: 0.5, ay: 0.5 }, loach_fish: { face: -1, ax: 0.5, ay: 0.5 },
     catfish: { face: -1, ax: 0.514, ay: 0.622, frames: 8 }, turtle: { face: -1, ax: 0.539, ay: 0.524, frames: 4 },
     catpaw: { face: 1, ax: 0.5, ay: 0.8 }, cat: { face: 1, ax: 0.5, ay: 1 },
@@ -498,8 +497,6 @@
     if (o.frozen) return PAL.frozen;
     if (o.white) return PAL.white;
     var c = colorOf(o);
-    if (o.wrinkles) return PAL[OLDPAL[c]];
-    if (o.zen) return zenPal(c);
     return FISH_PALETTES[c === 'orange' ? 'normal' : c];
   }
 
@@ -695,66 +692,6 @@
     }
 
     // --- 老い：白い眉・しわ・長い白ひげ ---
-    if (o.wrinkles) {
-      var wc = p.D, bw = '#ffffff', bg2 = '#e2ddd6';
-      var byb = E.ey - Math.ceil(E.r) - 1;
-      // 老眼鏡（丸い金縁。横顔は奥の玉が手前の玉に隠れる）
-      var GF = '#b8862a', glr = E.r + 1.3;
-      [[E.ex1, 0], [E.ex2, 1]].forEach(function (eq) {
-        for (var a = 0; a < 72; a++) {
-          var an = a / 72 * Math.PI * 2, gx = Math.floor(eq[0] + Math.cos(an) * glr), gy = Math.floor(E.ey + Math.sin(an) * glr);
-          if (eq[1] && !A.isFront) { var qx = gx + 0.5 - E.ex1, qy = gy + 0.5 - E.ey; if (qx * qx + qy * qy < (glr + 0.5) * (glr + 0.5)) continue; }
-          g.set(gx, gy, GF);
-        }
-      });
-      g.set(E.ex1 - 2, E.ey - 2, '#ffffff'); g.set(E.ex1 - 1, E.ey - 3, '#ffffff');
-      if (A.isFront) g.line([[E.ex2 + R(glr), E.ey - 1], [0, E.ey - 2], [E.ex1 - R(glr), E.ey - 1]], GF);
-      else g.line([[E.ex2 - R(glr), E.ey - 1], [E.ex2 - R(glr) - 1, E.ey - 1], [E.ex2 - R(glr) - 2, E.ey], [E.ex2 - R(glr) - 3, E.ey], [E.ex2 - R(glr) - 4, E.ey + 1]], GF);
-      g.stamp(function (x, y) {
-        for (var q = 0; q < 2; q++) {
-          var ex = q ? E.ex1 : E.ex2, dx = x - ex;
-          if (y === byb - 2 && dx >= -2 && dx <= 1) return bw;
-          if (y === byb - 1 && dx >= -4 && dx <= 3) return (dx & 1) ? bg2 : bw;
-          if (y === byb && (dx <= -3 && dx >= -5 || dx >= 2 && dx <= 4)) return bw;
-          if (y === byb + 1 && (dx === -5 || dx === 4)) return bw;
-          if (y === byb + 2 && (dx === -5 && q === 0)) return bw;
-        }
-        return null;
-      }, K, [E.ex2 - 7, byb - 4, E.ex1 + 6, byb + 4]);
-      if (!A.isFront) {
-        g.line([[cx - 4, -2], [cx - 3, -1], [cx - 3, 0]], wc);
-        g.line([[cx - 7, 1], [cx - 6, 2]], wc);
-        g.line([[A.tb + 1, -1], [A.tb + 2, 0], [A.tb + 2, 1]], wc);
-      }
-      g.line([[E.ex1 - 1, E.ey + R(E.r) + 2], [E.ex1, E.ey + R(E.r) + 2], [E.ex1 + 1, E.ey + R(E.r) + 1]], wc);
-      g.line([[E.ex2 - 1, E.ey + R(E.r) + 2], [E.ex2, E.ey + R(E.r) + 2], [E.ex2 + 1, E.ey + R(E.r) + 1]], wc);
-      var bsw = Math.sin(ph) * 1.2, my = A.my, fxm = A.isFront ? 3 : A.fxm;
-      g.stamp(function (x, y) {
-        var dy = y - (my + 2);
-        if (dy < 0 || dy > 13) return null;
-        var c0 = fxm - 3.5 - (A.isFront ? 0 : dy * 0.18) + (dy > 5 ? bsw * (dy - 5) / 8 : 0);
-        var hw = dy < 3 ? 3.4 : 3.4 * Math.pow((14 - dy) / 11, 0.7);
-        if ((dy % 4 === 3) && dy < 12) hw -= 0.7;
-        var ux = x + 0.5 - c0;
-        if (Math.abs(ux) > hw) return null;
-        return (((x + 60) % 2 === 0) && dy > 1 && Math.abs(ux) < hw - 1) ? bg2 : bw;
-      }, '#7e8a8a', [fxm - 15, my + 1, fxm + 2, my + 16]);
-      if (A.isFront) {
-        g.line([[-5, my + 1], [-4, my + 2], [-3, my + 2], [-2, my + 1]], bw); g.line([[1, my + 1], [2, my + 2], [3, my + 2], [4, my + 1]], bw);
-      } else {
-        g.line([[fxm - 2, my], [fxm - 1, my + 1], [fxm, my + 1], [fxm + 1, my + 2], [fxm + 2, my + 2], [fxm + 3, my + 1]], bw);
-        g.set(fxm + 3, my, bw);
-      }
-      // 杖（胸びれでつく）
-      var CB = '#9a6a3a', CL = '#c8945a', ccx = A.isFront ? R(A.front) + 2 : cx + 1, cy0 = A.isFront ? A.my + 1 : R(ry * 0.5), cy1 = R(ry) + 10;
-      g.stamp(function (x, y) {
-        if (y >= cy0 && y <= cy1 && (x === ccx || x === ccx + 1)) return y === cy1 ? '#3a3a3a' : x === ccx ? CL : CB;
-        var dx = x + 0.5 - (ccx + 3), dy = y + 0.5 - cy0, d2 = dx * dx + dy * dy;
-        if (y <= cy0 && d2 >= 1.4 && d2 <= 8) return dy < -1.5 ? CL : CB;
-        return null;
-      }, K, [ccx - 2, cy0 - 5, ccx + 7, cy1 + 1]);
-      g.stamp(function (x, y) { var dx = x + 0.5 - (ccx + 0.5), dy = y + 0.5 - (cy0 + 3); return dx * dx / 6 + dy * dy / 3 <= 1 ? (((x + y) % 3 === 0) ? p.L : p.F) : null; }, K, [ccx - 4, cy0, ccx + 4, cy0 + 6]);
-    }
 
     // --- 苔（もこもこ） ---
     if (o.moss) {
@@ -1107,7 +1044,6 @@
 
     g.K = K; g.keep = [PUPIL]; g.keepSep = p.W;
     if (o.bones) return buildSkeleton(g, o, ph, S, splitExt);   // v22: スケルトンの最後は骨だけに
-    if (o.stone) return buildStone(g, o, S, splitExt);
     var skel = !!o.skeleton && !(o.puff || o.balloon), cut = S.cx - S.rx * 0.12; // ガイコツ：頭だけ残り、胴のまん中は魚の骨
     // 裏返り（_rollA 0..0.5：0=ふつう 0.25=45° 0.5=お腹がこちら）：体を軸にまわす。目は頭の上へ、お腹が下から回りこむ
     var rA = !puff && o._rollA > 0 ? Math.min(0.5, +o._rollA) : 0, rC = Math.cos(Math.PI * rA), rS = Math.sin(Math.PI * rA);
@@ -1420,48 +1356,6 @@
     g.K = XK; g.keep = ['#060a20'];
   }
 
-  // 魚の形の石（v15：石だたみのようなひび・灰色のくちびる）。目だけは生きている
-  function buildStone(g, o, S, splitExt) {
-    var p = PAL.stone, K = p.K;
-    var ref = buildFish(merge(o, { stone: false, moss: false, glitch: false, flower: false, frozen: false, xray: false, spiky: false, palette: 'stone', eyes: 'normal', legs: false, _gm: null, _pal: null }), 0, S, splitExt);
-    var STL = '#c8c2b6', STB = '#9a948a', STB2 = '#a6a096', STB3 = '#8e887e', STD = '#77716a', CRK = '#5a564e', STP = '#bcb6aa';
-    var body = {}; body[p.B] = 1; body[p.D] = 1; body[p.L] = 1; body[p.F] = 1; body[p.P] = 2;
-    var bb = bbox(ref);
-    var CS = 7; // ひびの網目の大きさ
-    var seed = function (cx, cy) { return [(cx + 0.15 + hash(cx + 40, cy + 70) * 0.7) * CS, (cy + 0.15 + hash(cx + 90, cy + 20) * 0.7) * CS]; };
-    for (var y = bb[1]; y < bb[3]; y++) for (var x = bb[0]; x < bb[2]; x++) {
-      var c = ref.get(x, y); if (!c) continue;
-      if (!body[c]) { g.set(x, y, c); continue; }
-      var px = x + 0.5, py = y + 0.5, gx = Math.floor(px / CS), gy = Math.floor(py / CS), d1 = 1e9, d2 = 1e9, cid = 0;
-      for (var j = -1; j <= 1; j++) for (var i = -1; i <= 1; i++) {
-        var sp = seed(gx + i, gy + j), dx = px - sp[0], dy = py - sp[1], d = Math.sqrt(dx * dx + dy * dy);
-        if (d < d1) { d2 = d1; d1 = d; cid = (gx + i) * 31 + (gy + j) * 17; } else if (d < d2) d2 = d;
-      }
-      var col;
-      if (d2 - d1 < 0.75) col = CRK;
-      else {
-        var hv = hash(cid, 5);
-        col = body[c] === 2 ? (hv > 0.5 ? STP : '#b0aa9e') : hv > 0.66 ? STB2 : hv > 0.33 ? STB : STB3;
-        if (d2 - d1 < 1.6 && hash(x, y) > 0.55) col = STL; // ひびのふちが光る
-      }
-      var out1 = !ref.get(x - 1, y - 1) || ref.get(x - 1, y - 1) === K, out2 = !ref.get(x + 1, y + 1) || ref.get(x + 1, y + 1) === K;
-      if (out1 && col !== CRK) col = STL; else if (out2 && col !== CRK) col = STD;
-      g.set(x, y, col);
-    }
-    // 大きなひび（頭のてっぺんから）
-    var E = eyeCenters(S, o), hx = R(S.cx - 2), top = -R(S.ry) + 1;
-    [[0, 0], [1, 1], [1, 2], [0, 3], [1, 4], [2, 5], [2, 6], [1, 7]].forEach(function (q) { if (g.get(hx + q[0], top + q[1]) && g.get(hx + q[0], top + q[1]) !== K) g.set(hx + q[0], top + q[1], '#3e3a34'); });
-    // 目（生きている）
-    var et = o.eyes || 'normal';
-    if (EYE_TYPES.indexOf(et) < 0 || et === 'love' || et === 'sparkle') et = 'normal';
-    var ep = { B: STB, D: STD, L: STL, W: '#efebe2', K: '#3a3832' };
-    var ey2 = E.ey2 == null ? E.ey : E.ey2;
-    drawEye(g, E.ex2, ey2, E.r, et === 'tight' ? 'tightL' : et, ep, o.look || 'fwd');
-    drawEye(g, E.ex1, E.ey, E.r, et === 'tight' ? 'tightR' : et, ep, o.look || 'fwd');
-    g.K = K; g.keep = [PUPIL]; g.keepSep = ep.W;
-    if (o.glitch) glitchGrid(g, 0);
-    return g;
-  }
 
   function addIce(g) {
     var bb = bbox(g); g._bb = null;
@@ -2050,112 +1944,6 @@
     g._bb = null;
   }
 
-  // ---- 竜（金魚の頭と尾の面影、長い蛇体・たてがみ・角・ひげ・小さな手足） ----
-  var dragonCache = {};
-  function buildDragon(frame, col) {
-    col = COLORS[col] ? col : 'orange';
-    var dk = col + frame;
-    if (dragonCache[dk]) return dragonCache[dk];
-    var g = new Grid(170, 100, 90, 52);
-    var p = col === "orange" ? PAL.normal : PAL[col], AC = ACCENT[col], K = FK, ph = frame / 8 * Math.PI * 2;
-    g.K = K; g.keep = [PUPIL]; g.keepSep = p.W;
-    var ctrl = [];
-    for (var xx = -54; xx <= 26; xx += 4) {
-      var k = (26 - xx) / 80;
-      ctrl.push([xx, Math.sin(xx * 0.085 + ph) * (1.5 + 5.5 * k) + 2 * k]);
-    }
-    var pts = pathSamples(ctrl, 0.6);
-    pts.forEach(function (q) { q.r = 2.2 + 5.6 * Math.pow(q.f, 0.5); q.z = 0; });
-    var tail = pts[0], neck = pts[pts.length - 1], yN = neck.y;
-    var at = function (f) { return pts[Math.min(pts.length - 1, Math.max(0, Math.round(f * (pts.length - 1))))]; };
-    // 尾（金魚の二つの房・金色）
-    stampTail(g, R(tail.x) + 1, R(tail.y), 13, 1.8, ph * 1.3, { B: '#ffc23a', F: '#ffb428', L: '#fff07a' }, K);
-    // 背中のとげ（たてがみの続き）
-    var spikes = [];
-    for (var i = 10; i < pts.length - 8; i += 9) {
-      var q = pts[i], bx = q.x + q.nx * q.r * 0.6, by = q.y + q.ny * q.r * 0.6, h = 3 + 3.5 * q.f;
-      spikes.push([[bx + q.tx * 2.4, by + q.ty * 2.4], [bx - q.tx * 2.4, by - q.ty * 2.4], [bx + q.nx * h - q.tx * 2.8, by + q.ny * h - q.ty * 2.8]]);
-    }
-    g.stamp(function (x, y) { for (var j = 0; j < spikes.length; j++) if (inPoly(x + 0.5, y + 0.5, spikes[j])) return ((x + y) & 1) ? AC[0] : AC[1]; return null; }, K, [-62, -30, 30, 20]);
-    // 手足
-    var legs = [[0.33, 0], [0.83, 2]];
-    var leg = function (f, far, sw) {
-      var q = at(f), hx0 = q.x - q.nx * q.r * 0.4 + (far ? -3 : 0), hy0 = q.y - q.ny * q.r * 0.4 + (far ? -1 : 0);
-      var fx = hx0 + 2.5 + sw, fy = hy0 + q.r * 0.6 + 5.5;
-      var col = far ? p.D : p.B;
-      g.stamp(function (x, y) {
-        var px = x + 0.5, py = y + 0.5;
-        if (segDist2(px, py, hx0, hy0, fx, fy) <= 2.6) return col;
-        var dx = px - (fx + 1), dy = py - (fy + 0.6); if (dx * dx / 5 + dy * dy / 2 <= 1) return col;
-        return null;
-      }, K, [hx0 - 4, hy0 - 3, fx + 6, fy + 4]);
-      for (var c = 0; c < 3; c++) g.set(R(fx) + c * 2, R(fy) + 2, '#ffffff');
-    };
-    legs.forEach(function (L, j) { leg(L[0], true, R(Math.sin(ph + j + 1.6) * 1.2)); });
-    // 胴（オレンジのうろこ・金の腹板）
-    tube(g, pts, function (v, q2) {
-      if (v < -0.3) return ((q2.s % 2.8) < 0.8) ? GOLD_D : GOLD_S;
-      if (v > 0.72) return p.D;
-      var ux = q2.s / 3, uy = v * q2.r / 2.4 + (Math.floor(ux) & 1) * 0.5, fx2 = ux - Math.floor(ux), fy2 = uy - Math.floor(uy);
-      if (fy2 < 0.28 && fx2 > 0.2 && fx2 < 0.8) return p.D;
-      if (fy2 > 0.7 && fx2 < 0.35) return v > 0.1 ? '#ffe070' : p.L;
-      return p.B;
-    }, K, 10);
-    legs.forEach(function (L, j) { leg(L[0], false, R(Math.sin(ph + j) * 1.2)); });
-    // たてがみ（頭のうしろに流れる炎）
-    var hx = R(neck.x + 7), hy = R(yN - 1);
-    var tufts = [];
-    for (var m = 0; m < 7; m++) { var dyy = -10 + m * 3.2; tufts.push([hx - 10 - Math.abs(dyy) * 0.2, hy + dyy + Math.sin(ph * 2 + m) * 1, 7.5 - Math.abs(m - 3) * 0.5, 2.3, dyy * 0.06]); }
-    g.stamp(function (x, y) {
-      for (var j = 0; j < tufts.length; j++) {
-        var T = tufts[j], c = Math.cos(T[4]), s = Math.sin(T[4]), dx = x + 0.5 - T[0], dy = y + 0.5 - T[1];
-        var u = c * dx + s * dy, v = -s * dx + c * dy, w = T[3] * (u < 0 ? (1 + u / T[2]) : 1);
-        if (Math.abs(u) <= T[2] && Math.abs(v) <= Math.max(0.6, w)) return v < 0 ? AC[2] : AC[1];
-      }
-      return null;
-    }, K, [hx - 24, hy - 15, hx - 1, hy + 14]);
-    // 頭（v15 の金魚の頭：まんまる・前に飛び出す白い大目2つ・赤いくちびる・クリーム色のあご）
-    var hr = 9.5;
-    var inA = function (px, py) { var a = (px - hx) / hr, b = (py - hy) / (hr * 0.95); return a * a + b * b <= 1; };
-    g.stamp(function (x, y) {
-      var px = x + 0.5, py = y + 0.5;
-      if (!inA(px, py)) return null;
-      if (py > hy + hr * 0.42 + (px - hx) * 0.12) return p.P;
-      return p.B;
-    }, FK, [hx - 11, hy - 11, hx + 11, hy + 11]);
-    // 角（2本・金）
-    var horns = [[hx - 3, hy - 7, hx - 7, hy - 14], [hx - 7, hy - 14, hx - 11, hy - 16], [hx - 6, hy - 12, hx - 4, hy - 16],
-      [hx + 1, hy - 8, hx - 1.5, hy - 15], [hx - 1.5, hy - 15, hx - 4.5, hy - 18.5], [hx - 1, hy - 13, hx + 1.5, hy - 16.5]];
-    g.stamp(function (x, y) {
-      for (var j = 0; j < horns.length; j++) { var h2 = horns[j]; if (segDist2(x + 0.5, y + 0.5, h2[0], h2[1], h2[2], h2[3]) <= 0.9) return (j < 3) ? '#e8b030' : '#ffd84a'; }
-      return null;
-    }, FK, [hx - 14, hy - 21, hx + 6, hy - 6]);
-    g.set(hx - 11, hy - 17, '#fff4a0'); g.set(hx - 5, hy - 19, '#fff4a0');
-    // えら・目・くちびる・怒り眉
-    var der = 3.9, dex1 = R(hx + hr - der + 0.8), dex2 = dex1 - R(2 * der + 3), dey = R(hy - 3.5);
-    gillLine(g, dex2 - der - 2, dey + 1, R(hy + 5), p, FK);
-    var dp = { B: p.B, D: p.D, L: p.L, W: p.W, K: FK };
-    drawEye(g, dex2, dey + 1, der, 'normal', dp, 'fwd'); drawEye(g, dex1, dey, der, 'normal', dp, 'fwd');
-    g.line([[dex2 - 3, dey - 6], [dex2 - 2, dey - 6], [dex2 - 1, dey - 5], [dex2, dey - 5], [dex2 + 1, dey - 4]], FK);
-    g.line([[dex1 - 2, dey - 6], [dex1 - 1, dey - 6], [dex1, dey - 5], [dex1 + 1, dey - 5], [dex1 + 2, dey - 4]], FK);
-    putMouth(g, '0', R(hx + hr * 0.5), R(hy + 3.5), false, p, FK);
-    g.set(dex2, dey + 6, BLUSH); g.set(dex2 + 1, dey + 6, BLUSH);
-    thicken(g, K);
-    // ひげ（2本、ゆらゆら）
-    for (var w = 0; w < 2; w++) for (var kk = 0; kk < 16; kk++) {
-      var wx = hx + 10 + kk * (w ? 0.8 : 1.0), wy = hy + 3 + w * 2 + kk * 0.55 + Math.sin(kk * 0.45 - ph * 1.5 + w) * 1.6 * (kk / 16);
-      g.set(R(wx), R(wy) + 1, K); g.set(R(wx), R(wy), w ? '#ffe890' : '#fff4c0');
-    }
-    g._bb = null;
-    dragonCache[dk] = g;
-    return g;
-  }
-  function dragonBlit(ctx, x, y, t, dir, sc, rot, flip, col) {
-    var g = buildDragon(Math.floor((+t || 0) * 8) & 7, col);
-    blit(ctx, g, x, y, { mirror: dir < 0, flip: !!flip, rot: rot || 0, scale: sc || 1, offx: -6, offy: 0 });
-  }
-  // 竜（約 120x50。dir<0 で左向き）
-  function drawDragon(ctx, x, y, t, dir, color) { dragonBlit(ctx, x, y, t, dir, 1, 0, false, color); }
 
   // ---- 人間不信：砂に潜って目だけ出す。y は砂面 ----
   var hermitCache = {};
@@ -2362,24 +2150,12 @@
     rect(ctx, x - 1, y, 3, 2, '#2a2a30'); rect(ctx, x + 2, y, 1, 1, '#c83a3a');
     rect(ctx, x - (f ? 2 : 1), y - 2, 2, 2, 'rgba(230,250,255,0.85)'); rect(ctx, x + 1, y - (f ? 2 : 1), 2, 2, 'rgba(230,250,255,0.85)');
   }
-  function drawFloatRing(ctx, x, y, t) {
-    x = R(x); y = R(y + Math.sin((+t || 0) * 2.5));
-    for (var dy = -4; dy <= 4; dy++) for (var dx = -8; dx <= 8; dx++) {
-      var e = (dx + 0.5) * (dx + 0.5) / 64 + (dy + 0.5) * (dy + 0.5) / 16;
-      if (e > 1) continue; var ei = (dx + 0.5) * (dx + 0.5) / 16 + (dy + 0.5) * (dy + 0.5) / 4;
-      if (ei < 1) continue;
-      var seg = Math.floor((Math.atan2(dy * 2, dx) + Math.PI) / (Math.PI / 3));
-      rect(ctx, x + dx, y + dy, 1, 1, e > 0.8 ? O : (seg & 1) ? '#ffffff' : '#f04a3a');
-    }
-    rect(ctx, x - 5, y - 3, 2, 1, '#ffd0d0');
-  }
 
   // 結末・死因プリセット（main.js から variant に死因IDを渡せる）
   var VARIANTS = {
     haircut: { trim: 1, eyes: 'x', mouth: 'tongue', flip: true },
     squashed: { eyes: 'tight', mouth: 'wavy', sx: 1.35, sy: 0.4, wag: 0 },
     loach: { eyes: 'side', mouth: 'o' },
-    cleanfreak: { white: true, shine: true, eyes: 'closed', mouth: 'o', flip: true },
     giant: { eyes: 'closed', mouth: 'o', wag: 0 },
     catfish: { eyes: 'x', mouth: 'o', scale: 0.5 },
     instant: { eyes: 'x', flip: true, mouth: 'tongue' },
@@ -2399,12 +2175,10 @@
     bug: { glitch: true, eyes: 'wide' },
     duck: { gone: true, icon: 'duck' },
     moss: { moss: true, eyes: 'sleepy' },
-    stone: { stone: true, eyes: 'normal' },
     split: { splitBody: 18, eyes: 'wide', sweat: true },
     skeleton: { bones: true, eyes: 'x' },
     overeat: { belly: true, eyes: 'happy', mouth: 1, sweat: true },
     fishman: { legs: true, drown: true, eyes: 'wide' },
-    oldage: { wrinkles: true, eyes: 'sleepy' },
     // 追加の突然死
     stuck: { stuck: true },
     hiccupfly: { halo: true, wings: true, eyes: 'closed', mouth: 'smile' },
@@ -2414,12 +2188,10 @@
     overhere: { gone: true, eyes: 'wide' },
     jumpout: { eyes: 'surprised', sweat: true },
     // 追加の結末
-    dragon: { dragon: true },
     golden: { palette: 'gold', shine: true, sparkle: true, eyes: 'smug' },
     hermit: { hermit: true },
     // 追加：お客さんイベントの突然死
     abducted: { eyes: 'surprised', mouth: 'o' },
-    sushi: { sushi: true },
     meteor: { meteor: true },
     possessed: { ghost: true },
     // 追加：結末
@@ -2765,15 +2537,7 @@
       { skeleton: true, eyes: 'teary', mouth: 'wavy', sy: 0.96 }, { skeleton: true, eyes: 'sleepy', mouth: 'o', sx: 0.94 },
       { skeleton: true, eyes: 'sleepy', mouth: 'o', sx: 0.9, dy: 1, fly: true }, { skeleton: true, eyes: 'x', mouth: 'o', r: 0.1, dy: 2, fly: true },
       { skeleton: true, eyes: 'x', mouth: 'o', a: 0.7, fx: [['burst', 0]] }, { bones: true, eyes: 'x', a: 0.85 }, { bones: true, eyes: 'x', dy: 1, r: -0.06 }
-    ], { bones: true, eyes: 'x' });    dieSeq('overeat', [
-      { chewF: 0 }, { chewF: 1 }, { chewF: 2 }, { chewF: 3 },
-      { cheeks: true, eyes: 'happy', mouth: 'c0', sx: 1.05, sy: 1.1 },
-      { belly: true, eyes: 'happy', mouth: 1, sy: 0.85 }, { belly: true, eyes: 'happy', mouth: 1, sy: 0.95 }, { belly: true, eyes: 'closed', mouth: 'smile' },
-      { belly: true, eyes: 'happy', mouth: 1, sweat: true, sy: 0.97 }, { belly: true, eyes: 'wide', mouth: 'o', sweat: true, sx: 1.04, sy: 1.06 },
-      { belly: true, eyes: 'surprised', mouth: 'o', sweat: true, sx: 1.06, sy: 1.08 }, { belly: true, eyes: 'closed', mouth: 'yawn', fx: [['burp', 0]] },
-      { belly: true, eyes: 'dizzy', mouth: 'wavy', sweat: true }
-    ], { variant: 'overeat', eyes: 'x' });
-    dieSeq('golden', [
+    ], { bones: true, eyes: 'x' });    dieSeq('golden', [
       {}, { eyes: 'closed', mouth: 'smile', fx: [['sparkle', 0]] }, { eyes: 'closed', mouth: 'smile', dy: -1, fx: [['sparkle', 1]] },
       { eyes: 'wide', mark: '?', wipe: [GD, 0.15] }, { eyes: 'surprised', mouth: 'o', wipe: [GD, 0.3] }, { eyes: 'surprised', mouth: 'o', wipe: [GD, 0.45], dx: 1 },
       { eyes: 'wide', wipe: [GD, 0.6] }, { eyes: 'wide', mouth: 'o', wipe: [GD, 0.75] }, { eyes: 'wide', wipe: [GD, 0.9] },
@@ -2787,11 +2551,6 @@
       { eyes: 'closed', r: 1.3, dy: -8, mound: 1, fx: [['sand', 1]] }, { r: 1.57, dy: -3, mound: 1, fx: [['sand', 2]] },
       { r: 1.57, dy: 1, swimF: 0, mound: 1 }, { r: 1.57, dy: 3, swimF: 2, mound: 1 }, { r: 1.57, dy: 6, swimF: 0, mound: 1 }
     ], { hermit: true });
-    dieSeq('cleanfreak', [
-      { eyes: 'surprised', mark: '!', palette: 'sky' },
-      { eyes: 'tight', mouth: 'wavy', palette: 'sky', dx: -3, r: -0.2 },
-      { eyes: 'tight', mouth: 'wavy', white: true, dx: 3, r: 0.2 }
-    ], { variant: 'cleanfreak' });
     dieSeq('babies', [
       {}, { eyes: 'surprised', mouth: 'o', sy: 1.06 }, { belly: true, eyes: 'wide', mouth: 'o' }, { belly: true, eyes: 'wide', mouth: 'o', sweat: true, dx: 1 },
       { belly: true, eyes: 'tight', mouth: 'wavy', sweat: true, sx: 1.05, sy: 1.05 }, { belly: true, eyes: 'tight', mouth: 'wavy', sweat: true, sx: 1.08, sy: 1.08, dx: -1, fx: [['shiver', 0]] },
@@ -3118,16 +2877,6 @@
       { eyes: 'teary', brows: 'worried', mouth: 'wavy', trim: 1, sx: 1.03, sy: 0.97, fx: [['shiver', 1]] },
       { eyes: 'x', mouth: 'o', trim: 1, roll: 0.25, dy: -1 }, { eyes: 'x', mouth: 'o', trim: 1, roll: 0.5, dy: -2 }, { eyes: 'x', mouth: 'tongue', trim: 1, roll: 0.75, dy: -1 }
     ], { eyes: 'x', mouth: 'tongue', trim: 1, flip: true, sy: 0.94 });
-    dieSeq('squashed', [
-      { eyes: 'side', mouth: 'o' }, { eyes: 'surprised', mark: '!' },
-      { eyes: 'tight', mouth: 'wavy', sx: 1.14, sy: 0.55, dy: 4 }
-    ], { variant: 'squashed', dy: 8 });
-    dieSeq('loach', [
-      { eyes: 'side', mouth: 'o', mark: '?' },
-      { eyes: 'closed', mouth: 'grin', r: 0.65 },
-      { eyes: 'surprised', mouth: 'o', r: 1.57, dy: 9 },
-      { eyes: 'tight', mouth: 'wavy', r: 1.35, dy: 15 }
-    ], { eyes: 'tight', mouth: 'wavy', r: 1.57, dy: 18, wag: 0 });
     // v20 ナマズにのまれた（ナマズ）：ごあいさつ → 大きな口 → ぎょっ → 吸いよせられる（のびる・ちぢむ）→ ちいさくなって消える
     dieSeq('catfish', [
       { eyes: 'sparkle', mouth: 'smile' }, { eyes: 'normal', mouth: 0, look: 'up' },
@@ -3189,7 +2938,6 @@
   function dieTarget(t, col) {
     if (typeof t === 'object') return t;
     if (t === 'old') return PAL[OLDPAL[col]];
-    if (t === 'zen') return zenPal(col);
     return FISH_PALETTES[t] || PAL[t] || FISH_PALETTES.normal;
   }
   function mixPal(col, t, k) {
@@ -3547,7 +3295,6 @@
     var sqx = (KF && KF.tailAnchor && !isFront && !isQ) ? S.tb - S.tl : bo.offx, sqy = KF && KF.ay ? R(KF.ay * S.ry) : 0;
     var sqk = (sqx !== bo.offx || sqy) ? '@' + sqx + ',' + sqy : '';
     if (o.hermit) { drawHermit(ctx, x, y + R(8 * sc), tt); return; }
-    if (o.dragon) { dragonBlit(ctx, x, y, tt, mirror ? -1 : 1, sc, bo.rot, bo.flip, fcol); return; }
     if (o.wings && o.fx !== false) drawWings(ctx, x, y, o, sc, S, tt, fxInfo);
     if (o.flat || o.knot) {
       var gk = cached(key + (o.flat ? '|flat' : '|knot'), function () { var gk1 = o.flat ? buildFlat(o, S) : buildKnot(o, frame, S, tframe); return o._gm ? o._gm(gk1, o, S, frame, tframe, false) : gk1; });
@@ -3583,13 +3330,11 @@
     var g = cached(key, function () {
       var gb = isQ ? buildQuarter(o, frame, S, tframe) : isFront ? buildFront(o, frame, S, tframe) : buildFish(o, frame, S, null, tframe);
       if (o.ghost) gb = ghostify(gb, o, S, isFront, frame);
-      else if (o.sushi) gb = sushify(gb, o, S);
       if (o._gm) gb = o._gm(gb, o, S, frame, tframe, isFront);
       return gb;
     });
     if (qx !== 1 || qy !== 1) { var g0 = g; g = cached(key + '|q' + qx + ',' + qy + sqk, function () { return squeeze(g0, qx, qy, sqx, sqy); }); }
     if (o.meteor) { var g1 = g; g = cached(key + '|q' + qx + ',' + qy + '|bump', function () { return addBump(g1, S, isFront, bo.offx, qx); }); }
-    if (o.zen) drawZenBack(ctx, x, y, o, sc, S, tt, fxInfo);
     if (o.glitch) glitchGhosts(ctx, g, x, y, bo, frame);
     var ga0 = ctx.globalAlpha;
     if (o.ghost) ctx.globalAlpha = ga0 * (0.78 + 0.08 * Math.sin(tt * 3));
@@ -4549,17 +4294,6 @@
 
   var FONT = '"Hiragino Maru Gothic ProN","Hiragino Kaku Gothic ProN","Noto Sans CJK JP","Noto Sans JP","Yu Gothic",sans-serif';
 
-  var CARD_WING = art([
-    '..........oooo..',
-    '........ooWWWo..',
-    '......ooWWWWo...',
-    '....ooWWWWWWooo.',
-    '..ooWWWWWWWWWWo.',
-    '.oWWWWWWWWWWoo..',
-    'oWWWWWWWWooo....',
-    'oWWWssssso......',
-    '.oooooooo.......'
-  ], { o: O, W: '#fff9e9', s: '#eee0c8' });
 
   // 死因ミニ絵（札・図鑑で使用）。size<=1: 図鑑用の小さな絵（魚は scale 0.5*size）
   // size>1: 小物つきの場面（約 31*size x 21*size に収まる。size=2 で魚は等倍）
@@ -4629,6 +4363,12 @@
         F(6, 9, { eyes: 'x', sx: 1.3, sy: 0.35, scale: fs * 0.9 });
         drawTurtleLook(ctx, x - R(11 * u), y + R(3 * u), 0, { dir: 1, look: 1, scale: 0.9 * u });
         break;
+      case 'kicked':   // v23.3：エビにけられて、画面のガラスにべちゃっ
+        F(-2, -2, { front: true, eyes: 'x', mouth: 'o', sx: 1.25, sy: 0.85, scale: fs * 1.2 });
+        drawShrimp(ctx, x + R(21 * u), y + R(12 * u), t, { dir: -1, jump: true, scale: 0.8 * u });
+        rect(ctx, x - R(30 * u), y - R(17 * u), R(3 * u), 1, '#ffffff'); rect(ctx, x - R(27 * u), y - R(14 * u), R(5 * u), 1, '#ffffff'); rect(ctx, x + R(16 * u), y - R(18 * u), R(6 * u), 1, '#ffffff');
+        drawMark(ctx, x + R(14 * u), y - R(14 * u), '!', t, u);
+        break;
       case 'loach':   // v23.2：まねして頭から砂にささり、尾だけ出てばたばた。となりでドジョウが顔を出す
         F(-6, 4, { dir: 1, rot: 1.5, eyes: 'x', scale: fs * 0.95 });
         sand(6); rect(ctx, x - R(34 * u), y + R(17 * u), R(68 * u), R(8 * u), SAND);
@@ -4688,16 +4428,6 @@
         F(0, big ? 3 : 1, { flip: false, eyes: 'surprised', mouth: 'o', smoke: false });
         if (big) { drawLightning(ctx, x - 25, y - 2, t); drawLightning(ctx, x + 25, y + 2, t + 0.4); drawPellet(ctx, x + 16, y - 15, 'spark', t); }
         else { rect(ctx, x + 6, y - 9, 1, 2, '#ffe23a'); rect(ctx, x + 5, y - 7, 2, 1, '#ffe23a'); rect(ctx, x + 5, y - 6, 1, 2, '#ffe23a'); }
-        break;
-      case 'overpolished':
-        prop(23, 1, 0.76, function (ctx) { drawBrush(ctx, 0, 0, t); });
-        react(-7, 3, { white: false, shine: false, sparkle: false });
-        ctx.save(); ctx.beginPath();
-        ctx.rect(x - R(29 * u), y - R(19 * u), R(13 * u), R(39 * u)); ctx.clip();
-        react(-7, 3, { shine: false, sparkle: false });
-        ctx.restore();
-        flash(-21, -12); flash(13, -12); flash(18, 13);
-        if (big) drawBubble(ctx, x - 24, y + 12, 3);
         break;
       case 'bird':   // v23.2：カモメが金魚をくわえて水面の上を飛んでいく
         if (big) surf(16);
@@ -4784,30 +4514,6 @@
           outEllipse(ctx, -11, 12, 4, 3, '#76af44');
         });
         break;
-      case 'stone':
-        if (big) sand(14);
-        F(0, 2, { eyes: 'wide', scale: fs * 0.96 });
-        flash(17, -12); break;
-      case 'split':
-        F(0, big ? 2 : 0, { scale: fs * (big ? 0.77 : 0.67) });
-        break;
-      case 'skeleton':
-        F(0, 0, { bones: false, skeleton: true, eyes: 'wide', t: t + 0.3 });
-        if (!big) drawFly(ctx, x + 7, y - 6, 0.1);
-        break;
-      case 'overeat':
-        if (big) { drawPellet(ctx, x - 24, y + 14, 'normal'); drawPellet(ctx, x + 24, y + 16, 'normal'); drawPellet(ctx, x + 18, y + 18, 'normal'); }
-        F(0, -3, { scale: fs * 0.94, mouth: 'grin' }); break;
-      case 'fishman':
-        if (big) { surf(-17); drawFloatRing(ctx, x + 20, y - 19, t); }
-        F(0, -2, { legLen: big ? 6 : 4, eyes: 'surprised', mouth: 'o' }); break;
-      case 'oldage':
-        F(0, -1, { scale: fs * 0.93, eyes: 'closed', mouth: 'smile' }); break;
-      case 'dragon':
-        dragonBlit(ctx, x + R(1 * u), y - R(8 * u), t, 1, 0.37 * u, -0.1, false);
-        react(-10, 8, { dragon: false, scale: fs * 0.72, eyes: 'sparkle' });
-        flash(23, 9);
-        break;
       case 'golden':
         if (big) { sand(14); }
         F(0, 2, { scale: fs * 0.94, sparkle: false });
@@ -4821,31 +4527,11 @@
         prop(21, -12, 0.67, function (ctx) { drawNetMini(ctx, 0, 7, false); });
         drawMark(ctx, x - R(22 * u), y - R(12 * u), 'anger', t, u);
         break;
-      case 'giant':
-        F(0, 1, { eyes: 'closed', mouth: 'o', scale: fs * 1.22, rot: 0.65, dir: -1 });
-        rect(ctx, x - R(24 * u), y - R(19 * u), 1, R(38 * u), '#367d72');
-        rect(ctx, x + R(24 * u), y - R(19 * u), 1, R(38 * u), '#367d72');
-        flash(20, -14);
-        break;
-      case 'cleanfreak':
-        F(0, 2, { scale: fs * 0.88 });
-        drawBubble(ctx, x - R(17 * u), y - R(8 * u), big ? 4 : 2);
-        drawBubble(ctx, x + R(12 * u), y + R(8 * u), big ? 5 : 3);
-        drawBubble(ctx, x + R(18 * u), y - R(8 * u), big ? 3 : 2);
-        flash(-7, -13);
-        break;
-      // --- 追加：お客さんイベントの突然死 ---
       case 'abducted':
         prop(0, -5, 1, function (ctx) { drawBeam(ctx, 0, 0, 26, t, 43); });
         drawUFO(ctx, x, y - R(9 * u), t, { scale: 0.72 * u });
         react(0, 10, { scale: fs * 0.78, rot: 0.2 });
         flash(22, 0);
-        break;
-      case 'sushi':
-        if (big) sand(16);
-        prop(19, 5, 0.72, function (ctx) { drawChefHand(ctx, 0, 0, t, { knife: true, len: 29 }); });
-        F(-9, 4, { fx: false, scale: fs * 0.86 });
-        flash(-22, -10);
         break;
       case 'meteor': // 隕石直撃
         if (big) {
@@ -4857,11 +4543,6 @@
           F(-2, 3, { meteor: false, burnt: true, eyes: 'dizzy', mouth: 'o', scale: fs * 0.95 });
           drawMeteor(ctx, x + 6, y - 5, 0.3, 0.32);
         }
-        break;
-      case 'possessed':
-        drawGhost(ctx, x + R(16 * u), y - R(5 * u), t, { scale: 0.77 * u, dir: -1 });
-        react(-10, 5, { ghost: false, scale: fs * 0.9 });
-        flash(-22, -9);
         break;
       case 'sucked':
         prop(2, -6, 0.85, function (ctx) { drawVacuum(ctx, 0, 0, { t: t, suck: true, top: -19 }); });
@@ -4885,13 +4566,6 @@
         drawPolaroid(ctx, x - R(10 * u), y + R(1 * u), { color: 'orange', stage: 2, scale: 1.18 * u });
         prop(19, 8, 0.68, function (ctx) { drawCamera(ctx, 0, 0, {}); });
         flash(19, -10);
-        break;
-      case 'pigeon':
-        prop(-7, 19, 0.72, function (ctx) { drawTopHat(ctx, 0, 0, {}); });
-        blit(ctx, CARD_WING, x + R(9 * u), y - R(9 * u), { scale: 1.2 * u });
-        react(-6, 0, { dir: -1, scale: fs * 0.82, rot: -0.2 });
-        blit(ctx, CARD_WING, x + R(9 * u), y + R(1 * u), { scale: 0.94 * u });
-        flash(-22, -10);
         break;
       case 'star':
         if (big) rect(ctx, x - 32, y - 21, 64, 42, '#42678b');
@@ -5354,13 +5028,6 @@
     if (o.mom) { a.eyes = dflt(o.eyes, 'closed'); a.mouth = dflt(o.mouth, 'smile'); a.sweat = dflt(o.sweat, true); a.blush = dflt(o.blush, true); }
     return merge(o, a);
   }
-  // 悟り：体色をほんのり金色に寄せたパレット
-  var zenMemo = {};
-  function zenPal(c) {
-    if (zenMemo[c]) return zenMemo[c];
-    var b = c === 'orange' ? PAL.normal : PAL[c], k = (c === 'sky' || c === 'purple' || c === 'lime') ? 0.16 : 0.38;
-    return (zenMemo[c] = { B: hexMix(b.B, '#ffdc5a', k), D: hexMix(b.D, '#d89a20', k), L: hexMix(b.L, '#fff6c0', k + 0.1), P: hexMix(b.P, '#fff0a8', 0.4), F: hexMix(b.F, '#ffe070', k), W: '#fffaf0', K: O });
-  }
   // 中身の外周（空きに接する所）を輪郭にする
   function reoutline(G, K) {
     var c0 = G.c.slice(), W = G.w, N = c0.length;
@@ -5457,38 +5124,6 @@
 
   // ---- 寿司：魚がシャリの上に乗ったにぎり（目は×、わさび少々） ----
   var RICE = '#fdfdf6', RICE_G = '#e2e0ce', RICE_S = '#d8d4c0';
-  function sushify(g, o, S) {
-    var K = g.K || O;
-    var x0 = S.tb - 1, x1 = S.cx + S.rx - 2, xc = (x0 + x1) / 2, rx = (x1 - x0) / 2 + 1;
-    var top = R(S.ry * 0.3), ryr = 6.5, yc = top + ryr;
-    var G = new Grid(g.w, g.h + 12, g.ox, g.oy);
-    G.K = K; G.keep = g.keep; G.keepSep = g.keepSep;
-    var inR = function (x, y) { var ax = Math.abs(x + 0.5 - xc) / rx, ay = Math.abs(y + 0.5 - yc) / ryr; return Math.pow(ax, 2.6) + Math.pow(ay, 2.2) <= 1; };
-    G.stamp(function (x, y) {
-      if (!inR(x, y)) return null;
-      if (!inR(x, y + 2)) return RICE_S;
-      var h = hash((x + 40) >> 1, y + (((x + 40) >> 1) & 1) * 7);
-      if (h > 0.72 && ((x + y) & 1)) return RICE_G;
-      return RICE;
-    }, O, [x0 - 4, top - 2, x1 + 4, yc + ryr + 2]);
-    var cut = top + 3, W = g.w, mark = {};
-    for (var j = 0; j < g.h; j++) for (var i = 0; i < W; i++) {
-      var c = g.c[j * W + i]; if (!c) continue;
-      var lx = i - g.ox, ly = j - g.oy;
-      if (ly > cut && inR(lx, ly)) continue;
-      G.set(lx, ly, c); mark[lx + ',' + ly] = 1;
-    }
-    // 魚の下端（シャリに乗る所）に輪郭
-    for (var k in mark) {
-      var xy = k.split(','), X = +xy[0], Y = +xy[1];
-      if (!mark[X + ',' + (Y + 1)] && inR(X, Y + 1) && G.get(X, Y) !== K) G.set(X, Y, K);
-    }
-    // わさび
-    var wx = R(S.cx - 1);
-    [[0, 1, '#8cd03a'], [1, 1, '#a6e05a'], [2, 1, '#8cd03a'], [3, 1, '#8cd03a'], [-1, 1, '#6ab02a'], [0, 2, '#6ab02a'], [1, 2, '#6ab02a'], [2, 2, '#6ab02a']].forEach(function (q) { G.set(wx + q[0], cut + q[1], q[2]); });
-    G._bb = null;
-    return G;
-  }
 
   // ---- 隕石：たんこぶ（ぺしゃんこにした後の格子に足す） ----
   function addBump(g0, S, isFront, offx, qx) {
@@ -5508,15 +5143,6 @@
     return g;
   }
 
-  // ---- 悟り：光背（後光）と蓮の花 ----
-  function ringPx(ctx, cx, cy, r, w, col, edge) {
-    var ro = r + w, n = Math.ceil(ro) + 1;
-    for (var dy = -n; dy <= n; dy++) for (var dx = -n; dx <= n; dx++) {
-      var d = Math.sqrt((dx + 0.5) * (dx + 0.5) + (dy + 0.5) * (dy + 0.5));
-      if (d < r || d > ro) continue;
-      rect(ctx, cx + dx, cy + dy, 1, 1, (d > ro - 0.8 || d < r + 0.6) ? edge : col);
-    }
-  }
   var lotusG = null;
   function petal(g, bx, by, tx, ty, w, cols) {
     var vx = tx - bx, vy = ty - by, L = Math.sqrt(vx * vx + vy * vy), ux = vx / L, uy = vy / L;
@@ -5544,24 +5170,6 @@
   function zenSpot(x, y, o, sc, S, info) {
     var H = headPos(x, y, o, sc, S, info), front = info.front;
     return { hx: front ? x : H.headX - H.dir * R(2 * sc), hy: y - R((front ? S.ry * 0.38 : S.ry * 0.32) * sc), ly: y + R((S.ry + (front ? 0 : 1)) * sc * (info.fy || 1)), ls: sc * (front ? 1 : 1.2), front: front };
-  }
-  function drawZenBack(ctx, x, y, o, sc, S, t, info) {
-    x = R(x); y = R(y);
-    var Z = zenSpot(x, y, o, sc, S, info), a0 = ctx.globalAlpha, rr = (Z.front ? 16 : 14) * sc;
-    if (o.fx !== false) {
-      ctx.globalAlpha = a0 * (0.2 + 0.06 * Math.sin(t * 2.5));
-      ellipse(ctx, x, y, (Z.front ? 21 : 32) * sc, 19 * sc, '#fff2a0');
-      ctx.globalAlpha = a0 * 0.5;
-      for (var k = 0; k < 16; k++) {
-        var an = k / 16 * Math.PI * 2 + t * 0.4, L = rr * ((k & 1) ? 1.3 : 1.55);
-        for (var d = rr + 2; d < L; d += 1) rect(ctx, Z.hx + R(Math.cos(an) * d), Z.hy + R(Math.sin(an) * d), 1, 1, '#ffe88a');
-      }
-    }
-    ctx.globalAlpha = a0 * 0.45; ellipse(ctx, Z.hx, Z.hy, rr, rr, '#fff4c0');
-    ctx.globalAlpha = a0;
-    ringPx(ctx, Z.hx, Z.hy, rr - 1.5 * Math.max(1, sc), 1.8 * Math.max(1, sc), '#ffd84a', '#c8962a');
-    var L2 = buildLotus();
-    blit(ctx, L2[0], x, Z.ly, Z.ls !== 1 ? { scale: Z.ls } : null);
   }
   function drawZenFront(ctx, x, y, o, sc, S, t, info) {
     x = R(x); y = R(y);
@@ -6482,7 +6090,6 @@
     drawCrack: drawCrack,
     drawSoul: drawSoul,
         drawSmear: drawSmear,
-    drawDragon: drawDragon,
     drawScale: drawScale,
     drawHermit: drawHermit,
         // 水槽の仲間・おもちゃ

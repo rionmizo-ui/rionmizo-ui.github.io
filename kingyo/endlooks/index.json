@@ -367,7 +367,6 @@
   "files": [
    "31_squashed_zoom.png",
    "31_squashed_screen.png",
-   "31_squashed_fish.png",
    "31_squashed_card.png"
   ]
  },
@@ -379,7 +378,6 @@
   "files": [
    "32_loach_zoom.png",
    "32_loach_screen.png",
-   "32_loach_fish.png",
    "32_loach_card.png"
   ]
  },
@@ -397,14 +395,13 @@
  },
  {
   "no": 34,
-  "id": "cleanfreak",
-  "name": "潔癖すぎた",
+  "id": "kicked",
+  "name": "エビにけられた",
   "kind": "sudden",
   "files": [
-   "34_cleanfreak_zoom.png",
-   "34_cleanfreak_screen.png",
-   "34_cleanfreak_fish.png",
-   "34_cleanfreak_card.png"
+   "34_kicked_zoom.png",
+   "34_kicked_screen.png",
+   "34_kicked_card.png"
   ]
  },
  {
