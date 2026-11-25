@@ -1930,6 +1930,7 @@ var GoldfishGame = (function () {
     if (v.kind === 'catfish' && S.drawCatfish) S.drawCatfish(ctx, Math.round(v.x), Math.round(v.y), T, { dir: v.vx >= 0 ? 1 : -1, open: v.open, belly: v.belly, happy: v.happy });
   }
   function drawTurtleVisitor(v) {
+    if (v.look && S.drawTurtleLook) { S.drawTurtleLook(ctx, Math.round(v.x), Math.round(v.y), T, { dir: Math.sign(v.vx), look: 1, blink: v.blink }); return; }
     S.drawTurtle(ctx, Math.round(v.x), Math.round(v.y), T,
       { dir: Math.sign(v.vx), happy: v.happy, neck: v.neck, surprised: v.falling });
   }
@@ -2040,13 +2041,22 @@ var GoldfishGame = (function () {
       sfx('pu');
       yield* tween(0.48, p => { v.y = y - 19 * Math.sin(p * Math.PI); fish.x = tailX + (x - tailX) * ease(p); fish.y = y + 15; });
       yield* tween(0.28, p => { v.y = y + 11 * p * p; });
-      fish.ex = {}; fish.opts = { variant: 'squashed', eyes: 'tight', mouth: 'wavy', scale: 1, swimF: 0 }; fish.y = y + 20;
+      // v23 P5：ぺたんこの金魚は頭をカメのうしろに出す。カメは乗ったまま振り向いて、こっちをじっと見る
+      fish.ex = {}; fish.dir = fish.face = -d; fish.x = x + d * 13;
+      fish.opts = { variant: 'squashed', eyes: 'tight', mouth: 'wavy', scale: 1, swimF: 0 }; fish.y = y + 20;
       sfx('koton');
       fx.push({ k: 'text', s: 'ぺたん！', x, y: y - 24, t: T, d: 1.2, c: '#ffd23a' });
-      yield 0.8;
-      yield* tween(0.8, p => { v.y = y + 11 - 23 * ease(p); v.x = x + d * 26 * p; });
-      visitor = null; visitAt = T + rnd(35, 60);
-      return yield* deathSettle('squashed');
+      yield 0.7;
+      { const vy0 = v.y, fy = SAND_Y - 4, dy = fy - fish.y;   // 乗ったまま砂の上まで、ずしーん
+        const vy1 = fy - 12;
+        yield* tween(0.9, p => { const e = p * p; fish.y = fy - dy * (1 - e); v.y = vy0 + (vy1 - vy0) * e; }); }
+      sfx('koton'); sandPuff(fish.x, SAND_Y, 10); fish.opts.eyes = 'x';
+      fx.push({ k: 'text', s: 'ずしーん', x, y: v.y - 26, t: T, d: 1.0, c: '#ffd23a' });
+      yield 1.0;
+      v.look = 1; sfx('blink'); yield 0.7;
+      fx.push({ k: 'text', s: '……', x: x + d * 17, y: v.y - 34, t: T, d: 1.6, c: '#ffffff' });
+      yield 1.2; v.blink = true; yield 0.15; v.blink = false; yield 0.9;
+      return yield* deathSettle('squashed', true);
     },
     *loach(v) {
       const dir = v.vx >= 0 ? 1 : -1, x = clamp(v.x - dir * 28, 28, 132);
@@ -2519,6 +2529,7 @@ var GoldfishGame = (function () {
       else if (eyeball) target = eyeball;
       else if (feather) target = feather;
       else if (duck) target = duck;
+      if (causeId === 'squashed' && visitor && visitor.look) { yield 0.4; showCard(causeId); return; }   // v23 P5：カメが乗ったまま札へ
       if (target && target.y < WATER + 4) target.y = WATER + 6;   // 浮いているものも水面ですくう
       const buried = causeId === 'loach';
       yield* scoop(target, { x: buried ? fish.x : 80, y: buried ? FLOOR : 130, big: causeId === 'cramped' || fish.opts.scale >= 2 });
@@ -3548,6 +3559,9 @@ var GoldfishGame = (function () {
     const gg = g.s.gauge / L.GAUGE_MAX, stage = gg < 0.36 ? 1 : gg < 0.72 ? 2 : 3;
     if (fish.inNet) {
       const o2 = Object.assign({ dir: fish.face, t: T, eyes: fish.eyes, mouth: 'o', stage, color: fish.color }, fish.opts, { scale: net && net.scale > 1 ? 1.6 : 0.8, rot: fish.face * 0.3 + (net ? net.tilt || 0 : 0) + Math.sin(T * 9) * 0.06 });
+      // v23 P5：ユーザーの絵になった魚は、網の中でもその絵のまま（巨大化は大きな網に大きいまま）
+      const na = fish.asset || (fish.opts.variant === 'giant' && fish.opts.scale >= 2.4 && S.hasAsset && S.hasAsset('giant') ? 'giant' : null);
+      if (na && S.drawAsset && na !== 'dragon') { S.drawAsset(ctx, na, Math.round(fish.x), Math.round(fish.y) - (na === 'giant' ? 14 : na === 'fishman' ? -14 : 4), { color: fish.color, dir: fish.face, scale: na === 'giant' ? 0.72 : 0.6, rot: o2.rot * 0.5 }); return; }
       if (!fish.opts.dragon) S.drawFish(ctx, Math.round(fish.x), Math.round(fish.y), o2);
       return;
     }
@@ -3882,6 +3896,13 @@ var GoldfishGame = (function () {
   }
 
   if (cfg.main) { window.addEventListener('resize', fit); fit(); }
+  // v23 P5：ボタンの絵文字を、金魚＋道具のドット絵に
+  if (cfg.main && S.drawButtonIcon) document.querySelectorAll('.btn[data-btn]').forEach(b => {
+    const ic = b.querySelector('.ic'); if (!ic) return;
+    const c = document.createElement('canvas'); c.width = 32; c.height = 28; c.className = 'pic';
+    const x = c.getContext('2d'); x.imageSmoothingEnabled = false; S.drawButtonIcon(x, b.dataset.btn, 'orange');
+    ic.replaceWith(c);
+  });
   if (cfg.manual) alive = false;   // 書き出し用：外から step() でコマを進める
   if (cfg.demo) { mode = 'play'; if (cfg.demo.startsWith('g:')) demoGesture(cfg.demo.slice(2)); else demo(cfg.demo, cfg.touch); }
   requestAnimationFrame(frame);

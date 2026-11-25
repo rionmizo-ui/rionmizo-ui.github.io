@@ -2412,7 +2412,7 @@
   // 結末・死因プリセット（main.js から variant に死因IDを渡せる）
   var VARIANTS = {
     haircut: { trim: 1, eyes: 'x', mouth: 'tongue', flip: true },
-    squashed: { eyes: 'tight', mouth: 'wavy', sx: 1.25, sy: 0.27, wag: 0 },
+    squashed: { eyes: 'tight', mouth: 'wavy', sx: 1.35, sy: 0.4, wag: 0 },
     loach: { eyes: 'side', mouth: 'o' },
     cleanfreak: { white: true, shine: true, eyes: 'closed', mouth: 'o', flip: true },
     daruma: { daruma: true },
@@ -4730,13 +4730,13 @@
   function drawGauge(ctx, value, max) {
     max = max || 25; value = Math.max(0, Math.min(max, value || 0));
     var x = 4, y = 30, w = 8, h = 111;
-    rect(ctx, x + 1, y, w - 2, h, O); rect(ctx, x, y + 1, w, h - 2, O);
+    rect(ctx, x + 1, y, w - 2, h, FK); rect(ctx, x, y + 1, w, h - 2, FK);   // v23 P5：こげ茶の輪郭・水色の中身（参考画像13）
     rect(ctx, x + 1, y + 1, w - 2, h - 2, CREAM);
     var ih = h - 4, fh = R(ih * value / max);
     var full = value >= max;
     if (fh > 0) {
       var fy = y + 2 + ih - fh;
-      var main = full ? '#ffd83a' : '#f09a3a', hi = full ? '#fff6a0' : '#ffc070', sh = full ? '#e0b020' : '#d27a2a';
+      var main = full ? '#ffd83a' : '#5ce0d6', hi = full ? '#fff6a0' : '#b8f8f2', sh = full ? '#e0b020' : '#2fb3aa';
       rect(ctx, x + 2, fy, 4, fh, main);
       rect(ctx, x + 2, fy, 1, fh, hi);
       rect(ctx, x + 5, fy, 1, fh, sh);
@@ -4747,7 +4747,7 @@
 
   function drawIconSlot(ctx, icon) {
     var x = 136, y = 4, w = 20, h = 20;
-    rect(ctx, x + 1, y, w - 2, h, O); rect(ctx, x, y + 1, w, h - 2, O);
+    rect(ctx, x + 1, y, w - 2, h, FK); rect(ctx, x, y + 1, w, h - 2, FK);
     rect(ctx, x + 1, y + 1, w - 2, h - 2, CREAM);
     rect(ctx, x + 2, y + h - 2, w - 4, 1, '#e8dcc0');
     if (icon) drawIcon(ctx, x + 10, y + 10, icon);
@@ -4779,10 +4779,14 @@
     var an = ICON_ASSET[id], ac = an && assetCanvas(an, iconColor);
     if (ac) {
       var inf = ASSET_INFO[an], aw = ac.width / (inf.frames || 1), ah = ac.height;
-      var boxW = (id === 'giant' ? 40 : 60) * u, boxH = 40 * u, k = Math.min(boxW / aw, boxH / ah);
+      if (id === 'giant') {   // v23 P5：体を横に寝かせて、絵の窓いっぱいに全身を描く（回したあとの外形 106x69）
+        var gk = Math.min(62 * u / 106, 42 * u / 69) * 0.95;
+        drawAsset(ctx, an, x - R(5 * gk), y + R(4 * gk), { color: iconColor, scale: gk, rot: -0.87 });
+        return;
+      }
+      var boxW = 60 * u, boxH = 40 * u, k = Math.min(boxW / aw, boxH / ah);
       k = big ? Math.max(0.25, Math.floor(k * 4) / 4) : k;
       var ax = inf.ax == null ? 0.5 : inf.ax, ay = inf.ay == null ? 0.5 : inf.ay;
-      if (id === 'giant') { rect(ctx, x - R(24 * u), y - R(19 * u), 1, R(38 * u), '#367d72'); rect(ctx, x + R(24 * u), y - R(19 * u), 1, R(38 * u), '#367d72'); }
       if (big && (id === 'overeat' || id === 'fishman')) { rect(ctx, x - R(30 * u), y + R(17 * u), R(60 * u), 1, '#a86a3a'); rect(ctx, x - R(30 * u), y + R(18 * u), R(60 * u), R(3 * u), SAND); }
       drawAsset(ctx, an, x + R((ax - 0.5) * aw * k), y + R((ay - 0.5) * ah * k), { color: iconColor, scale: k });
       return;
@@ -4829,9 +4833,8 @@
         break;
       case 'squashed':
         if (big) sand(15);
-        F(0, 9, { eyes: 'tight', sx: 1.24, sy: 0.35, scale: fs * 0.9 });
-        drawTurtle(ctx, x - R(3 * u), y + R(2 * u), 0, { dir: 1, surprised: true, scale: 0.9 * u });
-        flash(22, -10);
+        F(6, 9, { eyes: 'x', sx: 1.3, sy: 0.35, scale: fs * 0.9 });
+        drawTurtleLook(ctx, x - R(11 * u), y + R(3 * u), 0, { dir: 1, look: 1, scale: 0.9 * u });
         break;
       case 'loach':
         react(-10, -4, { dir: 1, rot: 1.18, eyes: 'side', scale: fs * 0.83 });
@@ -6335,6 +6338,52 @@
       { mirror: o.dir < 0, scale: o.scale || 1 });
   }
 
+  // v23 P5：カメが頭をこちら（画面の前）に向けて、じっと見る。o.look 0..1（0=横顔、1=正面）、o.blink
+  function drawTurtleLook(ctx, x, y, t, o) {
+    o = o || {}; var d = o.dir < 0 ? -1 : 1, sc = o.scale || 1;
+    if (!drawAsset(ctx, 'turtle', x, y, { dir: d, scale: sc })) { drawTurtle(ctx, x, y, t, o); return; }
+    if (!(o.look > 0.5)) return;
+    var hx = R(x + d * 17 * sc), hy = R(y - 16 * sc), k = sc;
+    var E = function (dx, dy, rx, ry, c) { ellipse(ctx, hx + R(dx * k), hy + R(dy * k), Math.max(1, R(rx * k)), Math.max(1, R(ry * k)), c); };
+    var Q = function (dx, dy, w, h, c) { rect(ctx, hx + R(dx * k), hy + R(dy * k), Math.max(1, R(w * k)), Math.max(1, R(h * k)), c); };
+    E(0, 0, 10, 8, '#2a1408'); E(0, 0, 9, 7, '#cce43c'); E(0, 3, 8, 4, '#b4d030'); E(-2, -4, 4, 2, '#e4f48c');
+    Q(-10, 1, 2, 3, '#fc4830'); Q(8, 1, 2, 3, '#fc4830');   // 赤い耳
+    if (o.blink) { Q(-6, -1, 5, 1, '#2a1408'); Q(2, -1, 5, 1, '#2a1408'); }
+    else {
+      E(-4, -1, 3.5, 3.5, '#2a1408'); E(4, -1, 3.5, 3.5, '#2a1408'); E(-4, -1, 2.5, 2.5, '#ffffff'); E(4, -1, 2.5, 2.5, '#ffffff');
+      Q(-5, -1, 2, 2, '#2a1408'); Q(4, -1, 2, 2, '#2a1408');   // 黒目はまっすぐ正面
+      Q(-6, -3, 5, 1, '#2a1408'); Q(2, -3, 5, 1, '#2a1408');   // 半目（じとっ）
+    }
+    Q(-2, 4, 4, 1, '#2a1408');   // 口はまっすぐ
+  }
+
+  // v23 P5：ボタンの絵（参考画像13の上の段）。32x28 の水色の札に、金魚と道具。kind = feed / clean / touch / net
+  function drawButtonIcon(ctx, kind, color) {
+    var W2 = 32, H2 = 28, fc = color || 'orange';
+    rect(ctx, 2, 0, W2 - 4, H2, FK); rect(ctx, 0, 2, W2, H2 - 4, FK); rect(ctx, 1, 1, W2 - 2, H2 - 2, FK);
+    rect(ctx, 2, 2, W2 - 4, H2 - 4, '#86e8dc'); rect(ctx, 3, 3, W2 - 6, 2, '#c4f6ee'); rect(ctx, 2, H2 - 6, W2 - 4, 4, '#6fd6c9');
+    var yel = '#ffc83a', ex = function (x, y) { rect(ctx, x, y, 1, 3, yel); rect(ctx, x + 3, y - 1, 1, 4, yel); rect(ctx, x + 6, y, 1, 3, yel); };
+    if (kind === 'net') {   // 網は金魚のうしろ
+      for (var n = 0; n < 7; n++) { rect(ctx, 11 + n, 13 + n, 2, 1, FK); rect(ctx, 12 + n, 13 + n, 1, 1, '#d89a4a'); }   // 柄
+      ellipse(ctx, 8, 11, 6, 7, '#2a4a8a'); ellipse(ctx, 8, 11, 5, 6, '#e8fbff');
+      for (var m = -4; m <= 4; m += 2) { rect(ctx, 8 + m, 6, 1, 11, '#9fd8e8'); rect(ctx, 4, 11 + m, 9, 1, '#9fd8e8'); }
+    }
+    drawFish(ctx, 20, 15, { color: fc, stage: 2, dir: -1, scale: 0.45, eyes: kind === 'clean' ? 'normal' : 'wide', mouth: kind === 'feed' ? 'o' : 'normal', swimF: 0 });
+    if (kind === 'feed') {
+      rect(ctx, 3, 19, 9, 6, FK); rect(ctx, 4, 20, 7, 4, '#fff0c8'); rect(ctx, 4, 22, 7, 2, '#e8c88a');
+      for (var i = 0; i < 3; i++) rect(ctx, 4 + i * 2 + (i & 1), 18 - (i & 1), 2, 2, '#8a4a1c');
+      ex(5, 5);
+    } else if (kind === 'clean') {
+      for (var n = 0; n < 6; n++) { rect(ctx, 3 + n, 4 + n, 3, 1, FK); rect(ctx, 4 + n, 4 + n, 1, 1, '#c8803a'); }   // 柄
+      rect(ctx, 6, 9, 8, 9, FK); rect(ctx, 7, 10, 6, 7, '#fff4d8'); for (var m = 0; m < 3; m++) rect(ctx, 8 + m * 2, 12, 1, 5, '#e0c890'); rect(ctx, 7, 10, 6, 2, '#a85a2a');
+      rect(ctx, 6, 4, 1, 3, yel); rect(ctx, 5, 5, 3, 1, yel);
+    } else if (kind === 'touch') {   // 上から指
+      for (var k = 0; k < 6; k++) { rect(ctx, 8 + k, 2 + k, 5, 1, FK); rect(ctx, 9 + k, 2 + k, 3, 1, '#ffd2b0'); }
+      rect(ctx, 14, 8, 4, 1, FK); rect(ctx, 15, 7, 2, 1, '#fff0e4');
+      ex(24, 3);
+    } else if (kind === 'net') ex(20, 3);
+  }
+
   // 甲羅ぼしの岩山。岩の頂点を top に合わせる。
   function buildBaskRock(top) {
     return popGet('bask:' + top, function () {
@@ -6789,7 +6838,7 @@
 
   var GoldfishSprites = {
     drawAsset: drawAsset, hasAsset: hasAsset,
-    zukanCols: zukanCols, drawTurtle: drawTurtle, drawBaskRock: drawBaskRock, drawLoach: drawLoach, drawCatfish: drawCatfish, drawDecor: drawDecor, DECOR_MAX: DECOR_MAX,
+    zukanCols: zukanCols, drawTurtle: drawTurtle, drawTurtleLook: drawTurtleLook, drawButtonIcon: drawButtonIcon, drawBaskRock: drawBaskRock, drawLoach: drawLoach, drawCatfish: drawCatfish, drawDecor: drawDecor, DECOR_MAX: DECOR_MAX,
     drawTank: drawTank, drawSandFront: drawSandFront,
     drawFish: drawFish,
     drawPellet: drawPellet,
