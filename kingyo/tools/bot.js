@@ -9,6 +9,7 @@ const { chromium } = require('playwright');
   await pg.goto('file://' + file + '?fresh=1&speed=' + speed);
   await pg.waitForFunction(() => window.__gf);
   await pg.evaluate(({ strat, evOk }) => {
+    window.__stats = {};
     const gf = window.__gf; const log = window.__log = { deaths: {}, fish: 0, full: 0, stuck: 0, events: {}, evRes: {}, gest: 0, visit: 0, rest: 0 }; let pg = false, pv = null, pr = false;
     let lastMode = '', nextAct = 0, evSeen = null, evAt = 0, lastProgressT = 0, lastSig = '';
     const STR = {
@@ -52,7 +53,7 @@ const { chromium } = require('playwright');
     const T = await pg.evaluate(() => window.__gf.T);
     if (T > +secs || Date.now() - t0 > 400000) break;
   }
-  const log = await pg.evaluate(() => window.__log);
+  const log = await pg.evaluate(() => Object.assign(window.__log, { stats: window.__stats }));
   const T = await pg.evaluate(() => window.__gf.T);
   console.log(JSON.stringify({ strat, T: Math.round(T), ...log, errs: [...new Set(errs)].slice(0, 20) }));
   await b.close();

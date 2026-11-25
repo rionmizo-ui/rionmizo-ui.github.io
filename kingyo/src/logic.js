@@ -131,7 +131,7 @@ var GoldfishLogic = (function () {
   const TOUCH_ACC = ['cat', 'bird', 'dizzy', 'bubblegone', 'floataway'];  // REACTIONS の先頭5つに対応、P.touch
   const TRICK_ACC = { hoop: 'knotted', deadplay: 'nowake', rocket: 'star', daruma: 'daruma' };
   // ふれあいの反応。先頭5つは企画書の反応（それぞれ事故あり）、残りは追加の芸
-  const REACTIONS = ['pet', 'jump', 'spin', 'bubble', 'puff', 'hoop', 'deadplay', 'handstand', 'highfive', 'ball', 'kiss', 'limbo', 'tag', 'handshake', 'heartswim', 'sing',
+  const REACTIONS = ['pet', 'jump', 'spin', 'bubble', 'puff', 'hoop', 'deadplay', 'ball', 'limbo', 'heartswim', 'sing',
     'sumo', 'rocket', 'daruma', 'moonwalk'];
   // 性格（魚ごとにランダム）
   const PERSONAS = [

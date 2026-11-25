@@ -7,6 +7,7 @@ var GoldfishGame = (function () {
  function mount(cv, cfg) {
   cfg = cfg || {};
   const params = new URLSearchParams(location.search);
+  const stat = k => { const w = typeof window !== 'undefined' && window.__stats; if (w) w[k] = (w[k] || 0) + 1; };   // 出現回数の記録（bot 用）
   const SPEED = cfg.main ? parseFloat(params.get('speed') || '1') : 1;
   const ctx = cv.getContext('2d');
   ctx.imageSmoothingEnabled = false;
@@ -46,6 +47,7 @@ var GoldfishGame = (function () {
   let finger = null, brush = null, nozzle = null, net = null, paw = null, duck = null, feather = null, eyeball = null, bigBubble = null;
   let songCheckAt = 0, lastWant = null;
   let xo = {};   // v16 の小物（掃除機・釣り針・猛暑・カメラ・写真・手品・星）
+  const MG_WAIT = 8;   // v23 P5：お誘いを待つ秒数（4.5→8）
   let demoInvite = false, mini = null, mgInvite = null, mgAt = 80, dtNow = 0, omenG = 0, omenAt = 30, cardHint = { t: -1, s: '' };
   let wanderAt = 0, leftAt = 0, hintAt = 4, puText = 0, bootT = -1, feeding = false, gest = null, gestAt = 12, lastGest = null;
   Object.assign(fish, { face: 1, turnP: 0, sq: 0, sx: 1, sy: 1, chewUntil: 0, blinkAt: 2, blinkUntil: 0, ex: {}, swimPh: 0, eatT: -9, surpT: -9, rollF: null });
@@ -343,7 +345,7 @@ var GoldfishGame = (function () {
     ev = null; catObj = mpel = glow = null; dark = 0; shakeAmp = 0; evAt = T + rnd(35, 60); restUntil = 0;
     crack = soul = bigFace = smear = birdObj = null; scales = []; fish.hermit = false; hoop = ball = null; visitor = null; visitAt = T + rnd(25, 45);
     Object.assign(fish, { x: 80, y: -30, dir: 1, eyes: 'normal', vis: false, opts: {}, rot: 0, ox: 0, oy: 0, free: true, glitch: false, split: 0, smugUntil: 0, vx: 0, vy: 0, legLen: 0, cruise: false, turn: 3, look: null, wps: [], shakeUntil: 0, splitHead: 0, face: 1, turnP: 0, sq: 0, sx: 1, sy: 1, chewUntil: 0, blinkAt: 2, blinkUntil: 0, ex: {}, swimPh: 0, eatT: -9, surpT: -9, rollF: null });
-    gest = null; omenG = 0; omenAt = T + rnd(30, 40); mini = null; mgInvite = null; mgAt = T + rnd(60, 90);
+    gest = null; omenG = 0; omenAt = T + rnd(30, 40); mini = null; mgInvite = null; mgAt = T + rnd(20, 35);   // v23 P5：1匹目のうちに会えるよう早めに
   }
 
   function nextFish() {
@@ -656,7 +658,7 @@ var GoldfishGame = (function () {
   function* fingerPoke(dx, dy) { const x0 = finger.x, y0 = finger.y; yield* tween(0.12, p => { finger.x = x0 + dx * p; finger.y = y0 + dy * p; }); yield* tween(0.15, p => { finger.x = x0 + dx * (1 - p); finger.y = y0 + dy * (1 - p); }); }
 
   function* actTouch() {
-    const r = g.startTouch();
+    const r = g.startTouch(); stat('t:' + (r.reaction || (r.hungry ? 'hungry' : 'refused')));
     const above = () => [clamp(fish.x, 30, 130), clamp(fish.y - 14, 26, 200)];
     if (r.refused) {
       // ふれあいばかりで飽きた：指が来ても、ぷいっ
@@ -878,29 +880,6 @@ var GoldfishGame = (function () {
         yield* tween(0.3, p => { fish.oy = -Math.round(Math.sin(p * Math.PI) * 8); });
         fish.oy = 0; yield* fingerOut(0.4); yield 0.3; fish.ex = {}; fish.free = true; break;
       }
-      case 'handstand': {    // 逆立ちして尾をふりふり
-        yield* swimTo(clamp(fish.x, 40, 120), FLOOR - 22, 50);
-        fish.free = false; sfx('spin');
-        yield* tween(0.4, p => { fish.rot = fish.face * (Math.PI / 2) * ease(p); });
-        fish.ex = { eyes: 'closed', mouth: 'grin', wag: 3 };
-        yield* fingerTo(fish.x + 22, FLOOR - 40, 0.5);
-        for (let k = 0; k < 4; k++) { sfx('pet'); yield* tween(0.2, p => { finger.x += Math.sin(p * Math.PI * 2) * 1.5; }); }   // 指で拍手
-        yield* tween(0.4, p => { fish.rot = fish.face * (Math.PI / 2) * (1 - ease(p)); });
-        fish.rot = 0; yield* fingerOut(0.4); fish.ex = {}; fish.free = true; break;
-      }
-      case 'highfive': {     // 跳び上がって尾でハイタッチ
-        const fx0 = clamp(fish.x, 40, 120);
-        yield* swimTo(fx0, 80, 55);
-        yield* fingerTo(fx0 + fish.face * 6, 44, 0.5);
-        fish.free = false; fish.ex = { eyes: 'sparkle', mouth: 'grin' };
-        sfx('jump'); const y0 = fish.y;
-        yield* tween(0.35, p => { fish.y = y0 - 30 * Math.sin(p * Math.PI / 2); fish.rot = -fish.face * p * Math.PI; });
-        sfx('blink'); sfx('pet'); fx.push({ k: 'star', x: finger.x, y: finger.y + 2, t: T, d: 0.6 });
-        fx.push({ k: 'text', s: 'パチッ', x: finger.x, y: finger.y - 4, t: T, d: 0.9, c: '#ffffff' });
-        yield* fingerPoke(0, -3);
-        yield* tween(0.4, p => { fish.y = y0 - 30 * (1 - p); fish.rot = -fish.face * Math.PI * (1 + p); });
-        fish.rot = 0; yield* fingerOut(0.4); fish.ex = {}; fish.free = true; fish.tx = fish.x; fish.ty = fish.y; break;
-      }
       case 'ball': {         // ボールが真ん中まで沈んできて、ドリブルして、最後はシュートでどこかへ
         const bx = clamp(fish.x + fish.face * 24, 40, 120), by = rnd(100, 125);
         yield* fingerTo(bx, 6, 0.5);
@@ -938,18 +917,6 @@ var GoldfishGame = (function () {
         ball = null; fish.ex = { eyes: 'sparkle', mouth: 'grin', mark: 'note' }; yield 0.7;
         fish.ex = {}; fish.free = true; break;
       }
-      case 'kiss': {         // 指先にちゅっ
-        yield* swimTo(clamp(fish.x, 40, 120), clamp(fish.y, 70, 170), 45);
-        fish.free = false;
-        yield* fingerTo(fish.x + fish.face * 26, fish.y - 2, 0.6);
-        fish.ex = { eyes: 'closed', mouth: 'o', blush: true };
-        const x0 = fish.x; yield* tween(0.3, p => { fish.x = x0 + fish.face * 5 * p; });
-        sfx('pet'); sfx('blink'); fish.ex = { eyes: 'closed', mouth: 'o', blush: true, mark: 'heart' };
-        for (let i = 0; i < 6; i++) fx.push({ k: 'heart', x: finger.x, y: finger.y, t: T + i * 0.12, d: 1.0, vx: rnd(-10, 10) });
-        yield* fingerPoke(0, -2); yield 0.5;
-        yield* tween(0.3, p => { fish.x = x0 + fish.face * 5 * (1 - p); });
-        yield* fingerOut(0.5); fish.ex = {}; fish.free = true; break;
-      }
       case 'limbo': {        // 指の下を、のけぞってリンボー
         const lx = clamp(fish.x < 80 ? fish.x + 36 : fish.x - 36, 50, 110), ly = clamp(fish.y, 70, 170);
         const side = fish.x < lx ? -1 : 1;
@@ -962,36 +929,6 @@ var GoldfishGame = (function () {
         fish.rot = 0; sfx('fanfare'); fish.sq = 1; fish.ex = { eyes: 'sparkle', mouth: 'grin', mark: 'note' };
         yield* tween(0.4, p => { finger.x += Math.sin(p * Math.PI * 4) * 1.2; });   // 指がぱちぱち
         yield* fingerOut(0.4); fish.ex = {}; fish.free = true; break;
-      }
-      case 'tag': {          // 指と追いかけっこ
-        yield* fingerTo(clamp(fish.x + 40, 30, 130), clamp(fish.y - 10, 40, 180), 0.5);
-        fish.ex = { eyes: 'sparkle', mouth: 'grin' }; fish.free = true; fish.speed = 95; fish.turn = 9;
-        fx.push({ k: 'text', s: 'おにごっこ！', x: 80, y: 60, t: T, d: 1.4, c: '#ffffff' });
-        // 指がおに：魚はにげる
-        let t0 = T;
-        yield () => {
-          const dx = fish.x - finger.x, dy = fish.y - finger.y, d = Math.hypot(dx, dy) || 1;
-          finger.x += (fish.x - finger.x) * 0.035; finger.y += (fish.y - 12 - finger.y) * 0.035;
-          if (Math.hypot(fish.tx - fish.x, fish.ty - fish.y) < 10 || d < 30) { fish.tx = clamp(fish.x + dx / d * 60 + rnd(-20, 20), 26, 134); fish.ty = clamp(fish.y + dy / d * 50 + rnd(-20, 20), 40, 200); }
-          return T - t0 > 2.4;
-        };
-        // こんどは魚がおに：指をタッチ
-        fish.ex = { eyes: 'smug', brows: 'up', mouth: 'grin' };
-        const fx0 = finger.x, fy0 = finger.y;
-        yield* tween(0.9, p => { finger.x = fx0 + Math.sin(p * 6) * 20; finger.y = fy0 - p * 12; fish.tx = finger.x - fish.face * 18; fish.ty = finger.y + 12; });
-        sfx('blink'); sfx('pet'); fish.sq = 1; fx.push({ k: 'text', s: 'タッチ！', x: finger.x, y: finger.y - 6, t: T, d: 1.0, c: '#ffd23a' });
-        yield* fingerPoke(0, -4); fish.ex = { eyes: 'closed', mouth: 'grin', mark: 'note' };
-        yield* fingerOut(0.4); yield 0.3; fish.ex = {}; fish.speed = 30; break;
-      }
-      case 'handshake': {    // ひれで握手
-        yield* swimTo(clamp(fish.x, 40, 120), clamp(fish.y, 70, 170), 45);
-        fish.free = false;
-        yield* fingerTo(fish.x + fish.face * 10, fish.y - 12, 0.6);
-        fish.ex = { eyes: 'closed', mouth: 'smile', blush: true };
-        fx.push({ k: 'text', s: 'よろしく', x: fish.x, y: fish.y - 30, t: T, d: 1.4, c: '#ffffff' });
-        for (let k = 0; k < 3; k++) { sfx('pet'); yield* tween(0.22, p => { const o = Math.sin(p * Math.PI) * 4; finger.y = fish.y - 12 + o; fish.oy = Math.round(o * 0.6); fish.rot = fish.face * 0.12 * Math.sin(p * Math.PI); }); }
-        fish.oy = 0; fish.rot = 0; fish.ex = { eyes: 'sparkle', mouth: 'grin', mark: 'heart' };
-        yield* fingerOut(0.5); fish.ex = {}; fish.free = true; break;
       }
       case 'heartswim': {    // 泡でハートを描いて泳ぐ
         const cx = Math.round(clamp(fish.x, 56, 104)), cy = Math.round(clamp(fish.y, 90, 150));
@@ -1318,22 +1255,19 @@ var GoldfishGame = (function () {
     const pool = [];
     const add = (fn, w) => { for (let i = 0; i < w; i++) pool.push(fn); };
     add(gLookAtYou, 3); add(gYawn, 2); add(gHiccup, 2); add(gBlowBubbles, 3); add(gTailChase, 2);
-    add(gBonk, 2); add(gNibblePlant, 2); add(gDance, s.stress <= 30 ? 3 : 1); add(gPeek, 2); add(gShowOff, 2); add(gTongue, 1);
+    add(gBonk, 2); add(gNibblePlant, 2); add(gDance, s.stress <= 30 ? 3 : 1); add(gPeek, 2); add(gShowOff, 2);
     add(gNap, s.satiety >= 12 ? 3 : 1);
-    add(gDig, 4); add(gPebble, 2); add(gBubbleRide, 3); add(gSandHide, 2); add(gRoll, 2);   // 画面下でやること
-    if (s.dirt >= 2) add(gSneeze, 4);
-    if (s.satiety <= 4) add(gHungry, 5);
-    if (s.stress >= 60) add(gNervous, 5);
+    add(gDig, 4); add(gPebble, 2); add(gBubbleRide, 3); add(gSandHide, 2);   // 画面下でやること
+    add(gSneeze, 2); if (s.dirt >= 1) add(gSneeze, 4);   // v23 P5：くしゃみ（ぺらぺらの入口）を出やすく
     const pe = s.persona;
-    if (pe === 'glutton') add(gHungry, 3);
     if (pe === 'lazy') add(gNap, 4);
     if (pe === 'showoff') { add(gShowOff, 3); add(gDance, 3); add(gLookAtYou, 2); }
-    if (pe === 'timid') add(gNervous, 3);
     if (pe === 'clingy') { add(gLookAtYou, 3); add(gPeek, 2); }
     if (pe === 'neat' && s.dirt >= 1) add(gSneeze, 3);
     let fn = pool[Math.random() * pool.length | 0];
     for (let k = 0; k < 5 && fn === lastGest; k++) fn = pool[Math.random() * pool.length | 0];   // 同じしぐさを続けない
     lastGest = fn;
+    if (typeof window !== 'undefined' && window.__stats) { const nm = Object.keys(GESTURES).find(k => GESTURES[k] === fn); stat('g:' + (nm || '?')); }
     fish.cruise = false; fish.wps = [];
     gest = { it: fn(), wait: 0, cond: null };
   }
@@ -1348,7 +1282,7 @@ var GoldfishGame = (function () {
   function startEvent(kind) {
     if (gest) endGesture();
     queued = null; busy = true; fish.cruise = false; fish.wps = [];
-    ev = { kind, t0: T, limit: 3, need: 'clean', label: '', result: null };
+    ev = { kind, t0: T, limit: 3, need: 'clean', label: '', result: null }; stat('e:' + kind);
     startTask(function* () {
       const r = yield* EVENTS[kind](ev);
       ev = null; dark = 0; shakeAmp = 0; catObj = null; mpel = null;
@@ -1874,7 +1808,7 @@ var GoldfishGame = (function () {
     if (mode !== 'play') { if (visitor && mode !== 'dead') visitor = null; return; }
     if (!visitor) {
       if (idle && !gest && !mgInvite && T > visitAt) {
-        const kind = forceVisitor || VISITORS[Math.random() * VISITORS.length | 0];
+        const kind = forceVisitor || VISITORS[Math.random() * VISITORS.length | 0]; stat('v:' + kind);
         const from = Math.random() < 0.5 ? -1 : 1;
         visitor = kind === 'snail' ? { kind, x: rnd(30, 130), y: WATER + 4, vx: rnd(-3, 3), vy: 7, t0: T }
           : kind === 'crab' ? { kind, x: from < 0 ? -12 : W + 12, y: SAND_Y - 5, vx: -from * 16, vy: 0, t0: T }
@@ -2198,18 +2132,11 @@ var GoldfishGame = (function () {
     yield* tween(0.35, p => { fish.y = FLOOR - 8 - Math.sin(p * Math.PI) * 18; });
     yield 0.4; fish.free = true;
   }
-  function* gRoll() {            // 砂の上でごろごろ
-    yield go(rnd(40, 120), FLOOR - 8, 45);
-    fish.free = false; fish.ex = { eyes: 'closed', mouth: 'smile', blush: true };
-    const x0 = fish.x;
-    yield* tween(2.0, p => { const a = Math.sin(p * Math.PI * 3); fish.rot = a * 1.4; fish.x = x0 + a * 8; if (Math.abs(a) > 0.95) sandPuff(fish.x, FLOOR + 2, 1); });
-    fish.rot = 0; fish.ex = { eyes: 'closed', mouth: 'grin', mark: 'heart' }; yield 0.6; fish.free = true;
-  }
 
   const GESTURES = { look: gLookAtYou, yawn: gYawn, hiccup: gHiccup, sneeze: gSneeze, bubbles: gBlowBubbles, tail: gTailChase, bonk: gBonk,
-    nibble: gNibblePlant, nap: gNap, dance: gDance, peek: gPeek, showoff: gShowOff, tongue: gTongue, hungry: gHungry, nervous: gNervous,
-    dig: gDig, pebble: gPebble, bubbleride: gBubbleRide, sandhide: gSandHide, roll: gRoll };
-  function playGesture(name) { fish.cruise = false; fish.wps = []; gest = { it: GESTURES[name](), wait: 0, cond: null }; }
+    nibble: gNibblePlant, nap: gNap, dance: gDance, peek: gPeek, showoff: gShowOff,
+    dig: gDig, pebble: gPebble, bubbleride: gBubbleRide, sandhide: gSandHide };
+  function playGesture(name) { stat('g:' + name); fish.cruise = false; fish.wps = []; gest = { it: GESTURES[name](), wait: 0, cond: null }; }
   function endGesture() {
     gest = null; fish.ex = {}; fish.rot = 0; fish.oy = 0; fish.ox = 0; fish.turn = 3; fish.speed = 30; fish.free = true;
     if (carry) { treasures.push({ kind: carry, x: fish.x, y: FLOOR + 5 }); carry = null; }
@@ -2338,17 +2265,6 @@ var GoldfishGame = (function () {
     fish.rot = 0; fish.x = x0; fish.y = y0; fish.sq = 1; fish.ex = { eyes: 'smug', brows: 'up', mouth: 'grin', mark: 'heart' };
     fish.free = true; hold(); yield 0.9;
   }
-  function* gTongue() {          // あっかんべー
-    hold(); fish.ex = { front: true }; yield 0.3;
-    fish.ex = { front: true, eyes: 'closed', mouth: 'tongue' }; yield 0.9;
-    fish.ex = {}; yield 0.2;
-  }
-  function* gHungry() {          // おなかすいた…
-    yield go(fish.x, 40, 40);
-    hold(); fish.dir = fish.face;
-    for (let k = 0; k < 4; k++) { fish.ex = { eyes: 'teary', brows: 'worried', mouth: 'o' }; yield 0.22; fish.ex = { eyes: 'teary', brows: 'worried', mouth: 0 }; yield 0.22; }
-    thought = { icon: 'food', until: T + 2 }; fish.ex = { eyes: 'teary', mouth: 'pout', brows: 'worried' }; yield 0.8;
-  }
   const leftovers = () => pellets.filter(p => !p.mine && p.y >= EAT_Y && p.rot < 4.5);
   function* gLeftover() {        // 残っていた粒を、おなかに入るぶんだけ拾って食べる
     for (let k = 0; k < 9; k++) {
@@ -2374,14 +2290,6 @@ var GoldfishGame = (function () {
       yield 0.55;
     }
     fish.eyes = 'normal';
-  }
-  function* gNervous() {         // そわそわ
-    for (let k = 0; k < 4; k++) {
-      fish.ex = { eyes: 'side', brows: 'worried', mouth: 'wavy', sweat: true };
-      yield go(fish.x + rnd(-30, 30), fish.y + rnd(-20, 20), 90);
-      fish.dir = -fish.dir; yield 0.25;
-    }
-    fish.ex = { eyes: 'annoyed', brows: 'angry', mark: 'anger' }; hold(); yield 0.7;
   }
 
   // ---------------- 途中死 ----------------
@@ -3146,12 +3054,12 @@ var GoldfishGame = (function () {
   function updateMiniInvite() {
     if (mgInvite && T > mgInvite.until) { mgInvite = null; thought = null; }
     if (mode !== 'play' || (cfg.demo && !demoInvite) || busy || ev || gest || visitor || mgInvite || !fish.vis || T < mgAt || g.s.gauge < 2) return;
-    mgAt = T + rnd(70, 110);
-    mgInvite = { kind: demoInvite || MINI_KEYS[Math.random() * MINI_KEYS.length | 0], until: T + 4.5 };
-    thought = { icon: 'heart', until: T + 4.5 }; sfx('hint'); fish.sq = 1;
+    mgAt = T + rnd(35, 50);
+    mgInvite = { kind: demoInvite || MINI_KEYS[Math.random() * MINI_KEYS.length | 0], until: T + MG_WAIT };
+    thought = { icon: 'heart', until: T + MG_WAIT }; sfx('hint'); fish.sq = 1;
   }
   function startMini() {
-    const kind = mgInvite.kind;
+    const kind = mgInvite.kind; stat('m:' + kind);
     mgInvite = null; thought = null;
     if (gest) endGesture();
     busy = true; queued = null; fish.cruise = false; fish.wps = [];
@@ -3159,7 +3067,7 @@ var GoldfishGame = (function () {
       say(s, c) { this.msg = { s, c, t: T }; } };
     startTask(function* () {
       yield* actMini(m);
-      busy = false; mgAt = T + rnd(80, 120);
+      busy = false; mgAt = T + rnd(45, 60);
       try { g.save && g.save(); } catch (e) {}
       afterAction();
     });
@@ -3328,7 +3236,7 @@ var GoldfishGame = (function () {
       ctx.fillStyle = '#ff7aa8'; ctx.fillRect(20, Y, 120, 10);
       ctx.textAlign = 'center'; ctx.font = 'bold 8px sans-serif'; ctx.fillStyle = '#ffffff'; ctx.fillText(MINI_GAMES[mgInvite.kind].title, 80, Y + 8);
       ctx.fillStyle = '#5a2e2e'; ctx.font = 'bold 8px sans-serif'; ctx.fillText('ふれあい で あそぶ', 80, Y + 21);
-      const w = Math.max(0, (mgInvite.until - T) / 4.5);
+      const w = Math.max(0, (mgInvite.until - T) / MG_WAIT);
       ctx.fillStyle = '#ff7aa8'; ctx.fillRect(20, Y + 26, Math.round(120 * w), 2);
       ctx.textAlign = 'left';
     }
