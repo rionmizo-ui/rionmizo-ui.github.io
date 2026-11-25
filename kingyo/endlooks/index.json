@@ -1,0 +1,590 @@
+[
+ {
+  "no": 1,
+  "id": "instant",
+  "name": "即死",
+  "kind": "sudden",
+  "files": [
+   "01_instant_zoom.png",
+   "01_instant_screen.png",
+   "01_instant_fish.png",
+   "01_instant_card.png"
+  ]
+ },
+ {
+  "no": 2,
+  "id": "poison",
+  "name": "毒入り",
+  "kind": "sudden",
+  "files": [
+   "02_poison_zoom.png",
+   "02_poison_screen.png",
+   "02_poison_fish.png",
+   "02_poison_card.png"
+  ]
+ },
+ {
+  "no": 3,
+  "id": "frozen",
+  "name": "冷凍魚",
+  "kind": "sudden",
+  "files": [
+   "03_frozen_zoom.png",
+   "03_frozen_screen.png",
+   "03_frozen_fish.png",
+   "03_frozen_card.png"
+  ]
+ },
+ {
+  "no": 4,
+  "id": "flower",
+  "name": "頭に開花",
+  "kind": "sudden",
+  "files": [
+   "04_flower_zoom.png",
+   "04_flower_screen.png",
+   "04_flower_fish.png",
+   "04_flower_card.png"
+  ]
+ },
+ {
+  "no": 5,
+  "id": "burnt",
+  "name": "自分もこんがり",
+  "kind": "sudden",
+  "files": [
+   "05_burnt_zoom.png",
+   "05_burnt_screen.png",
+   "05_burnt_fish.png",
+   "05_burnt_card.png"
+  ]
+ },
+ {
+  "no": 6,
+  "id": "shock",
+  "name": "感電",
+  "kind": "sudden",
+  "files": [
+   "06_shock_zoom.png",
+   "06_shock_screen.png",
+   "06_shock_fish.png",
+   "06_shock_card.png"
+  ]
+ },
+ {
+  "no": 7,
+  "id": "sucked",
+  "name": "吸い込まれた",
+  "kind": "sudden",
+  "files": [
+   "07_sucked_zoom.png",
+   "07_sucked_screen.png",
+   "07_sucked_fish.png",
+   "07_sucked_card.png"
+  ]
+ },
+ {
+  "no": 8,
+  "id": "overpolished",
+  "name": "磨きすぎ",
+  "kind": "sudden",
+  "files": [
+   "08_overpolished_zoom.png",
+   "08_overpolished_screen.png",
+   "08_overpolished_fish.png",
+   "08_overpolished_card.png"
+  ]
+ },
+ {
+  "no": 9,
+  "id": "cat",
+  "name": "猫の手だった",
+  "kind": "sudden",
+  "files": [
+   "09_cat_zoom.png",
+   "09_cat_screen.png",
+   "09_cat_fish.png",
+   "09_cat_card.png"
+  ]
+ },
+ {
+  "no": 10,
+  "id": "bird",
+  "name": "鳥のおやつ",
+  "kind": "sudden",
+  "files": [
+   "10_bird_zoom.png",
+   "10_bird_screen.png",
+   "10_bird_fish.png",
+   "10_bird_card.png"
+  ]
+ },
+ {
+  "no": 11,
+  "id": "dizzy",
+  "name": "回りすぎ",
+  "kind": "sudden",
+  "files": [
+   "11_dizzy_zoom.png",
+   "11_dizzy_screen.png",
+   "11_dizzy_fish.png",
+   "11_dizzy_card.png"
+  ]
+ },
+ {
+  "no": 12,
+  "id": "bubblegone",
+  "name": "泡と消えた",
+  "kind": "sudden",
+  "files": [
+   "12_bubblegone_zoom.png",
+   "12_bubblegone_screen.png",
+   "12_bubblegone_fish.png",
+   "12_bubblegone_card.png"
+  ]
+ },
+ {
+  "no": 13,
+  "id": "floataway",
+  "name": "浮いたまま",
+  "kind": "sudden",
+  "files": [
+   "13_floataway_zoom.png",
+   "13_floataway_screen.png",
+   "13_floataway_fish.png",
+   "13_floataway_card.png"
+  ]
+ },
+ {
+  "no": 14,
+  "id": "netted",
+  "name": "すくえちゃった",
+  "kind": "sudden",
+  "files": [
+   "14_netted_zoom.png",
+   "14_netted_screen.png",
+   "14_netted_fish.png",
+   "14_netted_card.png"
+  ]
+ },
+ {
+  "no": 15,
+  "id": "stuck",
+  "name": "ガラスに刺さった",
+  "kind": "sudden",
+  "files": [
+   "15_stuck_zoom.png",
+   "15_stuck_screen.png",
+   "15_stuck_fish.png",
+   "15_stuck_card.png"
+  ]
+ },
+ {
+  "no": 16,
+  "id": "hiccupfly",
+  "name": "しゃっくりで昇天",
+  "kind": "sudden",
+  "files": [
+   "16_hiccupfly_zoom.png",
+   "16_hiccupfly_screen.png",
+   "16_hiccupfly_fish.png",
+   "16_hiccupfly_card.png"
+  ]
+ },
+ {
+  "no": 17,
+  "id": "knotted",
+  "name": "結んじゃった",
+  "kind": "sudden",
+  "files": [
+   "17_knotted_zoom.png",
+   "17_knotted_screen.png",
+   "17_knotted_fish.png",
+   "17_knotted_card.png"
+  ]
+ },
+ {
+  "no": 18,
+  "id": "flat",
+  "name": "ぺらぺら",
+  "kind": "sudden",
+  "files": [
+   "18_flat_zoom.png",
+   "18_flat_screen.png",
+   "18_flat_fish.png",
+   "18_flat_card.png"
+  ]
+ },
+ {
+  "no": 19,
+  "id": "nowake",
+  "name": "起きなかった",
+  "kind": "sudden",
+  "files": [
+   "19_nowake_zoom.png",
+   "19_nowake_screen.png",
+   "19_nowake_fish.png",
+   "19_nowake_card.png"
+  ]
+ },
+ {
+  "no": 20,
+  "id": "jumpout",
+  "name": "飛び出した",
+  "kind": "sudden",
+  "files": [
+   "20_jumpout_zoom.png",
+   "20_jumpout_screen.png",
+   "20_jumpout_fish.png",
+   "20_jumpout_card.png"
+  ]
+ },
+ {
+  "no": 21,
+  "id": "abducted",
+  "name": "宇宙人にさらわれた",
+  "kind": "sudden",
+  "files": [
+   "21_abducted_zoom.png",
+   "21_abducted_screen.png",
+   "21_abducted_fish.png",
+   "21_abducted_card.png"
+  ]
+ },
+ {
+  "no": 22,
+  "id": "sushi",
+  "name": "寿司にされた",
+  "kind": "sudden",
+  "files": [
+   "22_sushi_zoom.png",
+   "22_sushi_screen.png",
+   "22_sushi_fish.png",
+   "22_sushi_card.png"
+  ]
+ },
+ {
+  "no": 23,
+  "id": "meteor",
+  "name": "隕石直撃",
+  "kind": "sudden",
+  "files": [
+   "23_meteor_zoom.png",
+   "23_meteor_screen.png",
+   "23_meteor_fish.png",
+   "23_meteor_card.png"
+  ]
+ },
+ {
+  "no": 24,
+  "id": "possessed",
+  "name": "おばけになった",
+  "kind": "sudden",
+  "files": [
+   "24_possessed_zoom.png",
+   "24_possessed_screen.png",
+   "24_possessed_fish.png",
+   "24_possessed_card.png"
+  ]
+ },
+ {
+  "no": 25,
+  "id": "fished",
+  "name": "釣られた",
+  "kind": "sudden",
+  "files": [
+   "25_fished_zoom.png",
+   "25_fished_screen.png",
+   "25_fished_fish.png",
+   "25_fished_card.png"
+  ]
+ },
+ {
+  "no": 26,
+  "id": "boiled",
+  "name": "のぼせた",
+  "kind": "sudden",
+  "files": [
+   "26_boiled_zoom.png",
+   "26_boiled_screen.png",
+   "26_boiled_fish.png",
+   "26_boiled_card.png"
+  ]
+ },
+ {
+  "no": 27,
+  "id": "photo",
+  "name": "写真になった",
+  "kind": "sudden",
+  "files": [
+   "27_photo_zoom.png",
+   "27_photo_screen.png",
+   "27_photo_fish.png",
+   "27_photo_card.png"
+  ]
+ },
+ {
+  "no": 28,
+  "id": "pigeon",
+  "name": "ハトにされた",
+  "kind": "sudden",
+  "files": [
+   "28_pigeon_zoom.png",
+   "28_pigeon_screen.png",
+   "28_pigeon_fish.png",
+   "28_pigeon_card.png"
+  ]
+ },
+ {
+  "no": 29,
+  "id": "star",
+  "name": "星になった",
+  "kind": "sudden",
+  "files": [
+   "29_star_zoom.png",
+   "29_star_screen.png",
+   "29_star_fish.png",
+   "29_star_card.png"
+  ]
+ },
+ {
+  "no": 30,
+  "id": "haircut",
+  "name": "散髪されすぎ",
+  "kind": "sudden",
+  "files": [
+   "30_haircut_zoom.png",
+   "30_haircut_screen.png",
+   "30_haircut_fish.png",
+   "30_haircut_card.png"
+  ]
+ },
+ {
+  "no": 31,
+  "id": "squashed",
+  "name": "カメにつぶされた",
+  "kind": "sudden",
+  "files": [
+   "31_squashed_zoom.png",
+   "31_squashed_screen.png",
+   "31_squashed_fish.png",
+   "31_squashed_card.png"
+  ]
+ },
+ {
+  "no": 32,
+  "id": "loach",
+  "name": "まねして抜けなくなった",
+  "kind": "sudden",
+  "files": [
+   "32_loach_zoom.png",
+   "32_loach_screen.png",
+   "32_loach_fish.png",
+   "32_loach_card.png"
+  ]
+ },
+ {
+  "no": 33,
+  "id": "catfish",
+  "name": "ナマズにのまれた",
+  "kind": "sudden",
+  "files": [
+   "33_catfish_zoom.png",
+   "33_catfish_screen.png",
+   "33_catfish_fish.png",
+   "33_catfish_card.png"
+  ]
+ },
+ {
+  "no": 34,
+  "id": "cleanfreak",
+  "name": "潔癖すぎた",
+  "kind": "sudden",
+  "files": [
+   "34_cleanfreak_zoom.png",
+   "34_cleanfreak_screen.png",
+   "34_cleanfreak_fish.png",
+   "34_cleanfreak_card.png"
+  ]
+ },
+ {
+  "no": 35,
+  "id": "daruma",
+  "name": "だるまになった",
+  "kind": "sudden",
+  "files": [
+   "35_daruma_zoom.png",
+   "35_daruma_screen.png",
+   "35_daruma_fish.png",
+   "35_daruma_card.png"
+  ]
+ },
+ {
+  "no": 36,
+  "id": "bug",
+  "name": "バグった",
+  "kind": "ending",
+  "files": [
+   "36_bug_zoom.png",
+   "36_bug_screen.png",
+   "36_bug_fish.png",
+   "36_bug_card.png"
+  ]
+ },
+ {
+  "no": 37,
+  "id": "duck",
+  "name": "アヒルに交代",
+  "kind": "ending",
+  "files": [
+   "37_duck_zoom.png",
+   "37_duck_screen.png",
+   "37_duck_fish.png",
+   "37_duck_card.png"
+  ]
+ },
+ {
+  "no": 38,
+  "id": "moss",
+  "name": "コケまみれ",
+  "kind": "ending",
+  "files": [
+   "38_moss_zoom.png",
+   "38_moss_screen.png",
+   "38_moss_fish.png",
+   "38_moss_card.png"
+  ]
+ },
+ {
+  "no": 39,
+  "id": "stone",
+  "name": "緊張で石化",
+  "kind": "ending",
+  "files": [
+   "39_stone_zoom.png",
+   "39_stone_screen.png",
+   "39_stone_fish.png",
+   "39_stone_card.png"
+  ]
+ },
+ {
+  "no": 40,
+  "id": "split",
+  "name": "分裂失敗",
+  "kind": "ending",
+  "files": [
+   "40_split_zoom.png",
+   "40_split_screen.png",
+   "40_split_fish.png",
+   "40_split_card.png"
+  ]
+ },
+ {
+  "no": 41,
+  "id": "skeleton",
+  "name": "空腹でスケルトン",
+  "kind": "ending",
+  "files": [
+   "41_skeleton_zoom.png",
+   "41_skeleton_screen.png",
+   "41_skeleton_fish.png",
+   "41_skeleton_card.png"
+  ]
+ },
+ {
+  "no": 42,
+  "id": "overeat",
+  "name": "食べすぎ",
+  "kind": "ending",
+  "files": [
+   "42_overeat_zoom.png",
+   "42_overeat_screen.png",
+   "42_overeat_fish.png",
+   "42_overeat_card.png"
+  ]
+ },
+ {
+  "no": 43,
+  "id": "fishman",
+  "name": "魚人なのに溺死",
+  "kind": "ending",
+  "files": [
+   "43_fishman_zoom.png",
+   "43_fishman_screen.png",
+   "43_fishman_fish.png",
+   "43_fishman_card.png"
+  ]
+ },
+ {
+  "no": 44,
+  "id": "oldage",
+  "name": "大往生",
+  "kind": "ending",
+  "files": [
+   "44_oldage_zoom.png",
+   "44_oldage_screen.png",
+   "44_oldage_fish.png",
+   "44_oldage_card.png"
+  ]
+ },
+ {
+  "no": 45,
+  "id": "dragon",
+  "name": "竜になった",
+  "kind": "ending",
+  "files": [
+   "45_dragon_zoom.png",
+   "45_dragon_screen.png",
+   "45_dragon_fish.png",
+   "45_dragon_card.png"
+  ]
+ },
+ {
+  "no": 46,
+  "id": "golden",
+  "name": "純金になった",
+  "kind": "ending",
+  "files": [
+   "46_golden_zoom.png",
+   "46_golden_screen.png",
+   "46_golden_fish.png",
+   "46_golden_card.png"
+  ]
+ },
+ {
+  "no": 47,
+  "id": "hermit",
+  "name": "人間不信",
+  "kind": "ending",
+  "files": [
+   "47_hermit_zoom.png",
+   "47_hermit_screen.png",
+   "47_hermit_fish.png",
+   "47_hermit_card.png"
+  ]
+ },
+ {
+  "no": 48,
+  "id": "giant",
+  "name": "巨大化",
+  "kind": "ending",
+  "files": [
+   "48_giant_zoom.png",
+   "48_giant_screen.png",
+   "48_giant_fish.png",
+   "48_giant_card.png"
+  ]
+ },
+ {
+  "no": 49,
+  "id": "babies",
+  "name": "子だくさん",
+  "kind": "ending",
+  "files": [
+   "49_babies_zoom.png",
+   "49_babies_screen.png",
+   "49_babies_fish.png",
+   "49_babies_card.png"
+  ]
+ }
+]

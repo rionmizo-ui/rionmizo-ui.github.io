@@ -1,0 +1,48 @@
+<title>金魚の結末の姿</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;700;800&display=swap">
+<style>
+/* 描き直し用の参考帳：1行＝1つの死に方。左に名前と起き方、右に4枚の絵（拡大・金魚だけ・札・画面） */
+:root { --bg: #eef5f2; --panel: #fffaf0; --ink: #2a1408; --sub: #5d4a3e; --sudden: #b63a2e; --ending: #1f6f66; --line: #2a1408; --chk: #d9e6e2;
+  --body: "M PLUS Rounded 1c", "Hiragino Sans", "Yu Gothic", sans-serif; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg: #14211f; --panel: #1f2b29; --ink: #f4ece0; --sub: #c4b7aa; --sudden: #ff8a7a; --ending: #6fd6c9; --line: #0c1412; --chk: #2a3a37; color-scheme: dark } }
+:root[data-theme="dark"] { --bg: #14211f; --panel: #1f2b29; --ink: #f4ece0; --sub: #c4b7aa; --sudden: #ff8a7a; --ending: #6fd6c9; --line: #0c1412; --chk: #2a3a37; color-scheme: dark }
+body { background: var(--bg); color: var(--ink); font-family: var(--body); padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 20px 40px; }
+.wrap { max-width: 1180px; margin: 0 auto; display: grid; gap: 16px; }
+h1 { font-weight: 800; font-size: 1.6rem; margin: 0; text-wrap: balance; }
+.lead { margin: 0; color: var(--sub); line-height: 1.7; max-width: 66ch; }
+.tabs { display: flex; flex-wrap: wrap; gap: 8px; }
+.tabs button { font: 700 0.9rem var(--body); color: var(--ink); background: var(--panel); border: 2px solid var(--line); border-radius: 999px; padding: 6px 14px; cursor: pointer; }
+.tabs button[aria-pressed="true"] { background: var(--ink); color: var(--panel); }
+.tabs button:focus-visible { outline: 3px solid var(--ending); outline-offset: 2px; }
+ul.list { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; }
+.row { background: var(--panel); border: 3px solid var(--line); border-radius: 14px; padding: 12px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 3fr); gap: 14px; align-items: start; }
+@media (max-width: 760px) { .row { grid-template-columns: minmax(0, 1fr); } }
+.head { display: grid; gap: 6px; min-width: 0; }
+.no { margin: 0; font-size: 0.78rem; color: var(--sub); font-variant-numeric: tabular-nums; }
+.sudden .no { color: var(--sudden); } .ending .no { color: var(--ending); }
+.done { display: inline-block; margin-left: 4px; padding: 1px 8px; border-radius: 999px; border: 1.5px solid currentColor; font-weight: 700; }
+h2 { margin: 0; font-size: 1.15rem; } h2 code { font-size: 0.72rem; color: var(--sub); font-weight: 500; }
+.how { margin: 0; font-size: 0.86rem; line-height: 1.6; }
+.figs { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; min-width: 0; }
+@media (max-width: 520px) { .figs { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+figure { margin: 0; display: grid; gap: 4px; align-content: start; }
+figure img { width: 100%; height: auto; image-rendering: pixelated; border-radius: 8px; background: repeating-conic-gradient(var(--chk) 0 25%, transparent 0 50%) 0 0 / 16px 16px; }
+figcaption { font-size: 0.74rem; color: var(--sub); }
+</style>
+<div class="wrap">
+  <h1>金魚の結末の姿（v23・全{{N}}種）</h1>
+  <p class="lead">描き直し用の参考です。死に方ごとに「最後の瞬間の拡大」「金魚だけ（背景が透明）」「札」「そのときの画面」を並べました。消えるタイプ（飛んでいく・吸いこまれる など）は最後の瞬間が画面の外になるので、「金魚だけ」と「札」を見てください。「ユーザーの絵あり」は、すでに送ってもらった絵を使っている死に方です。画像は zip の endlooks フォルダに1枚ずつ入っています。</p>
+  <div class="tabs" role="group" aria-label="しぼりこみ">
+    <button id="f-all" type="button" aria-pressed="true" data-f="all">ぜんぶ {{N}}</button>
+    <button id="f-sudden" type="button" aria-pressed="false" data-f="sudden">しいん {{NS}}</button>
+    <button id="f-ending" type="button" aria-pressed="false" data-f="ending">けつまつ {{NE}}</button>
+  </div>
+  <ul class="list">{{ITEMS}}</ul>
+</div>
+<script>
+document.querySelectorAll('.tabs button').forEach(b => b.addEventListener('click', () => {
+  document.querySelectorAll('.tabs button').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+  document.querySelectorAll('.row').forEach(c => { c.hidden = b.dataset.f !== 'all' && c.dataset.kind !== b.dataset.f; });
+}));
+</script>
