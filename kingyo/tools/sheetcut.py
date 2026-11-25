@@ -91,7 +91,7 @@ def shrink(cell, box, k, dark_frac=0.26):
         sy0 = y0 + int(ty / k); sy1 = max(sy0 + 1, y0 + int((ty + 1) / k))
         for tx in range(tw):
             sx0 = x0 + int(tx / k); sx1 = max(sx0 + 1, x0 + int((tx + 1) / k))
-            n = op = dk = 0; rs = gs = bs = 0
+            n = op = dk = rd = 0; rs = gs = bs = 0; rr = rg = rb = 0
             for sy in range(sy0, min(sy1, cell.size[1])):
                 for sx in range(sx0, min(sx1, cell.size[0])):
                     n += 1
@@ -103,10 +103,14 @@ def shrink(cell, box, k, dark_frac=0.26):
                         dk += 1
                     else:
                         rs += r; gs += g; bs += b
+                        if r > 180 and g < 95 and b < 90:   # 唇の赤
+                            rd += 1; rr += r; rg += g; rb += b
             if n == 0 or op * 2 < n:
                 continue
             if dk >= dark_frac * op or op == dk:
                 o[tx, ty] = OUT_LINE + (255,)
+            elif rd >= 0.35 * (op - dk):
+                o[tx, ty] = (rr // rd, rg // rd, rb // rd, 255)
             else:
                 m = op - dk
                 o[tx, ty] = (rs // m, gs // m, bs // m, 255)
@@ -143,14 +147,25 @@ def main():
     # 色数を減らす（透明は別にとっておく）
     alpha = sheet.split()[3]
     rgb = Image.new('RGB', sheet.size, (0, 0, 0)); rgb.paste(sheet, mask=alpha)
-    q = rgb.quantize(colors=ncol - 1, method=Image.Quantize.MEDIANCUT, dither=Image.Dither.NONE)
-    pal = q.getpalette()[:3 * (ncol - 1)]
+    # 唇の赤は専用の色にとっておく（ほかの色にまぜない）
+    sp = sheet.load(); reds = []
+    for y in range(sheet.size[1]):
+        for x in range(sheet.size[0]):
+            r, g, b, a2 = sp[x, y]
+            if a2 > 128 and r > 180 and g < 95 and b < 90: reds.append((x, y, r, g, b))
+    nq = ncol - (2 if reds else 1)
+    q = rgb.quantize(colors=nq, method=Image.Quantize.MEDIANCUT, dither=Image.Dither.NONE)
+    pal = q.getpalette()[:3 * nq]
+    if reds:
+        pal += [sum(v[2] for v in reds) // len(reds), sum(v[3] for v in reds) // len(reds), sum(v[4] for v in reds) // len(reds)]
+    pal = pal + [0] * (3 * (ncol - 1) - len(pal))
     qi = q.load(); al = alpha.load()
     out = Image.new('P', sheet.size, ncol - 1)
     op = out.load()
     for y in range(sheet.size[1]):
         for x in range(sheet.size[0]):
             if al[x, y] > 128: op[x, y] = qi[x, y]
+    for (x, y, r, g, b) in reds: op[x, y] = nq
     out.putpalette(pal + [0, 0, 0] + [0] * (768 - 3 * ncol))
     out.info['transparency'] = ncol - 1
     out.save(dst, optimize=True, transparency=ncol - 1)

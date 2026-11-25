@@ -617,11 +617,13 @@ var GoldfishGame = (function () {
         // ブラシが魚を巻き込む
         fish.free = false; const fx0 = fish.x, fy0 = fish.y;
         yield* tween(0.4, p => { brush.x = sx + (fx0 - sx) * p; brush.y = sy + (fy0 - sy) * p; });
-        for (let k = 0; k < 6; k++) { sfx('brush'); fish.eyes = 'dizzy'; yield* tween(0.18, p => { brush.a = Math.sin(p * Math.PI * 2) * 6; fish.ox = Math.round(brush.a / 2); }); }
-        fish.opts = { white: true, shine: true, sparkle: true }; fish.ox = 0;
-        sfx('death');
-        yield* tween(0.6, p => { brush.x = fx0 + p * 100; brush.y = fy0 - p * 100; });
+        yield* tween(0.4, p => { brush.x = fx0 + p * 100; brush.y = fy0 - p * 100; });
         brush = null; wipes = null;
+        // v23.2：ユーザーの絵。スポンジでごしごしこすられて、真っ白になる（透けて消える演出はなくした）
+        fish.dir = fish.face = -1; fish.turnP = 0; fish.opts = {}; fish.ex = {};
+        for (let k = 0; k < 4; k++) setTimeoutT(() => sfx('brush'), 0.3 + k * 0.5);
+        yield* playSeq('overpolished', { d: 3.0 });
+        sfx('death');
         return yield* suddenDeath('overpolished', true);
       }
       const w = { x: sx, y: sy, r: 0 }; if (wipes) wipes.push(w);
@@ -742,7 +744,7 @@ var GoldfishGame = (function () {
           const from = fish.x < 80 ? 1 : -1;
           birdObj = { x: fish.x + from * 100, y: -10, dir: -from }; sfx('tweet');
           yield* tween(0.9, p => { birdObj.x = fish.x + from * 100 * (1 - p); birdObj.y = -10 + 14 * Math.sin(p * Math.PI / 2); fish.y = 8 - Math.sin(p * Math.PI) * 3; dieAt('bird', p); });
-          fish.die = null; fish.vis = false; sfx('pop'); fish.ex = {};
+          fish.die = null; fish.vis = false; sfx('pop'); fish.ex = {}; birdObj.carry = fish.color;   // v23.2：くちばしに金魚をくわえて飛んでいく
           yield* tween(0.9, p => { birdObj.x += -from * 2.4; birdObj.y = 4 - p * 34; });
           birdObj = null;
           yield* tween(0.6, p => { finger.x += Math.sin(p * 30) * 0.8; });   // 指もびっくり
@@ -1448,13 +1450,16 @@ var GoldfishGame = (function () {
       fish.ex = {}; sfx('meow');
       const fy = fish.y;
       yield* tween(0.25, p => { chef.y = fy - 26 + 10 * p; });
-      for (let k = 0; k < 3; k++) { A.tone(200, 0.08, 'square', 0.2); fx.push({ k: 'star', x: fish.x, y: fish.y, t: T, d: 0.3 }); fish.sq = 1; yield 0.25; }
-      yield* dieTo('sushi');
-      fish.opts = { variant: 'sushi', sushi: true }; fish.eyes = 'x'; fish.rot = 0;
+      // v23.2：ユーザーの絵。手でにぎられて、しゃりの上に
+      chef = null; fish.dir = fish.face = 1; fish.turnP = 0; fish.opts = {}; fish.rot = 0;
+      for (let k = 0; k < 3; k++) setTimeoutT(() => { A.tone(200, 0.08, 'square', 0.2); fx.push({ k: 'star', x: fish.x, y: fish.y + 10, t: T, d: 0.3 }); }, 0.8 + k * 0.45);
+      yield* playSeq('sushi', { d: 3.0 });
+      fish.eyes = 'x';
       fx.push({ k: 'text', s: 'へい、おまち！', x: 80, y: 60, t: T, d: 1.8, c: '#ffd23a', big: true }); sfx('fanfare');
       yield 1.2;
-      yield* tween(0.8, p => { fish.y = fy - (fy + 40) * ease(p); chef.y = fish.y - 16; });
-      fish.vis = false; chef = null;
+      const fy2 = fish.y;
+      yield* tween(0.8, p => { fish.y = fy2 - (fy2 + 60) * ease(p); });
+      fish.vis = false;
       return yield* deathSettle('sushi');
     },
     *meteor(e) {            // 隕石：指ではじく
@@ -1714,29 +1719,17 @@ var GoldfishGame = (function () {
         fish.ex = { eyes: 'sparkle', mouth: 'grin', mark: 'heart' }; evWin('見やぶった！ +1', 1); yield 0.8;
         return 'ok';
       }
-      // スリー！：帽子をかぶせて…ポン
+      // スリー！：v23.2 ユーザーの絵。帽子をかぶって…ハトになって飛んでいく
       fx.push({ k: 'text', s: 'スリー！', x: xo.wand.x, y: xo.wand.y - 14, t: T, d: 0.9, c: '#ffd23a', big: true }); xo.wand.spark = true;
-      try { S.prewarmDeath && S.prewarmDeath('pigeon', { color: fish.color, stage: stageNow() }); } catch (er) {}
-      for (let i = 6; i <= 14; i++) { fish.die = dfr('pigeon', i / 3); yield 0.14 / 3; }   // v20: 中割りで1/3ずつ
-      fish.die = dfr('pigeon', 5);
-      const hy0 = xo.hat.y, land = fish.y + 14;
-      yield* tween(0.3, p => { xo.hat.y = hy0 + (land - hy0) * p * p; xo.glove.y = xo.hat.y - 30; });
-      xo.clipY = 999; sfx('koton'); fish.vis = false; xo.wand.spark = false;   // 帽子の中
-      yield* tween(0.5, p => { xo.hat.x = hx + Math.sin(p * 30) * 2 * (1 - p); xo.glove.x = xo.hat.x; });
-      for (let i = 0; i < 6; i++) fx.push({ k: 'steam', x: hx + rnd(-14, 14), y: land - rnd(0, 20), t: T + i * 0.04, d: 0.7 });
-      sfx('puff'); fx.push({ k: 'text', s: 'ポン！', x: hx, y: land - 40, t: T, d: 0.8, c: '#ffffff', big: true });
-      // 帽子を上げると…
-      yield* tween(0.35, p => { xo.hat.y = land - 34 * ease(p); xo.glove.y = xo.hat.y - 30; });
-      xo.clipY = null; fish.vis = true; fish.x = hx; fish.y = land - 8; fish.rot = 0;
-      fish.die = dfr('pigeon', 6); yield 0.12;
+      xo.hat = null; fish.dir = fish.face = -1; fish.turnP = 0; fish.opts = {}; fish.look = null; fish.ex = {};
+      setTimeoutT(() => { sfx('puff'); fx.push({ k: 'text', s: 'ポン！', x: hx, y: fish.y - 40, t: T, d: 0.8, c: '#ffffff', big: true }); }, 1.6);
+      yield* playSeq('pigeon', { d: 3.2 });
+      xo.wand.spark = false;
       sfx('tweet'); A.tone(420, 0.25, 'sine', 0.2, 0.05, 0.7); A.tone(420, 0.3, 'sine', 0.2, 0.35, 0.6);
-      fx.push({ k: 'text', s: 'クルッポー', x: hx, y: fish.y - 24, t: T, d: 1.4, c: '#ffffff', big: true });
-      const fyp = fish.y, dirp = fish.face;
-      yield* tween(1.6, p => { fish.die = dfr('pigeon', 7 + (Math.floor(p * 14) % 3)); fish.y = fyp - (fyp + 40) * p * (0.3 + 0.7 * p); fish.x = hx + dirp * 40 * p + Math.sin(p * 10) * 3; });
-      fish.vis = false; fish.die = null;
-      const gy = xo.glove.y;
-      yield* tween(0.6, p => { xo.hat.y = gy + 30 - (gy + 80) * p; xo.glove.y = xo.hat.y - 30; xo.wand.y -= 2; });
-      xo.hat = xo.glove = xo.wand = null;
+      fx.push({ k: 'text', s: 'クルッポー', x: hx, y: fish.y - 30, t: T, d: 1.4, c: '#ffffff', big: true });
+      const fyp = fish.y;
+      yield* tween(1.6, p => { fish.y = fyp - (fyp + 60) * p * (0.3 + 0.7 * p); fish.x = hx - 40 * p + Math.sin(p * 10) * 3; xo.glove.y -= 1; xo.wand.y -= 1; });
+      fish.vis = false; xo.glove = xo.wand = null;
       fx.push({ k: 'text', s: 'ご喝采！', x: 80, y: 40, t: T, d: 1.4, c: '#ffd23a' });
       return yield* deathSettle('pigeon');
     },
@@ -2337,13 +2330,10 @@ var GoldfishGame = (function () {
       yield* dieTo('shock');
       fish.opts = { variant: 'shock', flip: true, spark: true, smoke: true }; fish.eyes = 'x'; sfx('death');
     },
-    *overpolished() {        // ごしごし→色がだんだん抜けて真っ白→きらーん
+    *overpolished() {        // v23.2：真っ白になったら、ピカーッ（絵はそのまま）
       for (let i = 0; i < 10; i++) fx.push({ k: 'star', x: fish.x + rnd(-20, 20), y: fish.y + rnd(-12, 12), t: T + i * 0.06, d: 0.5 });
-      // v22：尾から白くなっていき、ピカー！ のあと体が透けていく（最後の透けた姿のまま浮く）
-      setTimeoutT(() => { fx.push({ k: 'text', s: 'ピカーッ', x: 80, y: Math.max(40, fish.y - 30), t: T, d: 1.4, c: '#fff27a', big: true }); fx.push({ k: 'flash', t: T, d: 0.1 }); sfx('blink'); A.tone(2200, 0.5, 'sine', 0.15, 0, 1.2); }, 1.6);
-      yield* dieTo('overpolished');
-      const DFp = S.DEATH_FRAMES.overpolished; fish.die = { k: 'overpolished', f: DFp.hold };
-      fish.opts = { white: true, shine: true, sparkle: true }; fish.eyes = 'x';
+      fx.push({ k: 'text', s: 'ピカーッ', x: 80, y: Math.max(40, fish.y - 30), t: T, d: 1.4, c: '#fff27a', big: true }); fx.push({ k: 'flash', t: T, d: 0.1 }); A.tone(2200, 0.5, 'sine', 0.15, 0, 1.2);
+      yield 1.0; fish.eyes = 'x';
     },
     *dizzy() { yield* dieTo('dizzy'); fish.eyes = 'x'; fish.opts = { variant: 'dizzy', flip: true }; },
   };
@@ -2415,8 +2405,8 @@ var GoldfishGame = (function () {
   // ---------------- 満タン時の結末 ----------------
   // 変身後の完成形（交互表示でもこの姿を見せる）
   const END_LOOK = {
-    bug: {}, duck: {}, moss: { moss: true }, stone: { stone: true }, split: {}, skeleton: { skeleton: true },
-    overeat: { belly: true }, fishman: { legs: true }, oldage: { wrinkles: true },
+    bug: {}, duck: {}, moss: { moss: true }, split: {}, skeleton: { skeleton: true },
+    overeat: { belly: true }, fishman: { legs: true },
     babies: { mom: true },
     dragon: { dragon: true }, golden: { palette: 'gold', shine: true }, hermit: {},
   };
@@ -2470,7 +2460,7 @@ var GoldfishGame = (function () {
   // v23: ユーザーの絵で「変身後の姿」を出す結末
   const END_ASSET = { skeleton: 'skeleton' };
   // v23 P5c：コマ表で変身する結末と、変身にかける秒数・大きさ・動き
-  const SEQ_END = { overeat: { d: 3.2 }, split: { d: 3.4 }, dragon: { d: 3.4 }, fishman: { d: 3.6, y: () => SAND_Y - 36 }, giant: { d: 3.6, sc: 1.8 } };
+  const SEQ_END = { stone: { d: 3.2 }, oldage: { d: 3.4 }, overeat: { d: 3.2 }, split: { d: 3.4 }, dragon: { d: 3.4 }, fishman: { d: 3.6, y: () => SAND_Y - 36 }, giant: { d: 3.6, sc: 1.8 } };
   // コマ表を順に再生（コマが変わるたびに小さく弾む。となりのコマへ重ねてつなぐ）
   function* playSeq(name, o) {
     o = o || {};
@@ -2881,7 +2871,7 @@ var GoldfishGame = (function () {
     }
     if (finger) drawFinger(Math.round(finger.x), Math.round(finger.y));
     if (ball && S.drawBall) S.drawBall(ctx, Math.round(ball.x), Math.round(ball.y), T);
-    if (birdObj && S.drawBird) S.drawBird(ctx, Math.round(birdObj.x), Math.round(birdObj.y), T, birdObj.dir);
+    if (birdObj && S.drawBird) S.drawBird(ctx, Math.round(birdObj.x), Math.round(birdObj.y), T, birdObj.dir, birdObj.carry);
     if (paw) S.drawCatPaw(ctx, Math.round(paw.x), Math.round(paw.y), { fish: !!paw.fish, t: T });
     if (nozzle) S.drawNozzle(ctx, Math.round(nozzle.x), Math.round(nozzle.y), { suck: true, tail: !fish.vis, t: T });
     if (brush) { ctx.save(); ctx.translate(Math.round(brush.a), 0); S.drawBrush(ctx, Math.round(brush.x), Math.round(brush.y), T); ctx.restore(); }
@@ -3641,7 +3631,7 @@ var GoldfishGame = (function () {
     }
   }
   const TOUCH_OF = { cat: 'pet', cleanfreak: 'pet', bird: 'jump', dizzy: 'spin', bubblegone: 'bubble', floataway: 'puff', knotted: 'hoop', nowake: 'deadplay', star: 'rocket' };
-  function demoGesture(name) {
+  function demoGesture(name) { /*DEMO*/
     g.newFish = (orig => () => { orig(); g.s.phase = 'alive'; return { instantDeath: false }; })(g.newFish.bind(g));
     g.visitorAccident = () => null;
     director = { wait: 0, cond: null, it: (function* () {
@@ -3706,8 +3696,9 @@ var GoldfishGame = (function () {
         yield () => !gest;
       }
     })() };
+  /*/DEMO*/
   }
-  function demo(id, touch) {
+  function demo(id, touch) { /*DEMO*/
     const c = cause(id), o = {};
     ['newFish', 'startFeed', 'startClean', 'startTouch', 'net', 'decideEnding'].forEach(k => { o[k] = g[k].bind(g); });
     g.newFish = () => { const r = o.newFish(); if (id === 'instant') { g.s.phase = 'dead'; return { instantDeath: true }; } g.s.phase = 'alive'; return { instantDeath: false }; };
@@ -3737,6 +3728,7 @@ var GoldfishGame = (function () {
         yield 2.4;
       }
     })() };
+  /*/DEMO*/
   }
 
   if (cfg.main) { window.addEventListener('resize', fit); fit(); }

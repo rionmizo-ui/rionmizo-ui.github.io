@@ -330,15 +330,22 @@
   // face：画像の顔の向き（1=右 / -1=左）。ax,ay：(x,y) に合わせる点（0..1）。recolor：金魚の色ちがいを作るか
   var ASSET_INFO = {
     // v23 P5c：変身のコマ表（8コマ。1コマ目＝ふつうの金魚、ax/ay＝1コマ目の体の中心）。end：ふだんは最後のコマを描く
-    giant: { face: -1, ax: 0.593, ay: 0.578, recolor: 1, frames: 8, end: 1 },
-    overeat: { face: -1, ax: 0.577, ay: 0.506, recolor: 1, frames: 8, end: 1 },
-    fishman: { face: -1, ax: 0.581, ay: 0.533, recolor: 1, frames: 8, end: 1 },
-    split: { face: -1, ax: 0.556, ay: 0.475, recolor: 1, frames: 8, end: 1 },
-    dragon: { face: -1, ax: 0.555, ay: 0.541, recolor: 1, frames: 8, end: 1 },
-    possessed_ghost: { face: -1, ax: 0.552, ay: 0.565, recolor: 1, frames: 8, end: 1 },
+    giant: { face: -1, ax: 0.593, ay: 0.578, recolor: 1, frames: 6, end: 1 },
+    overeat: { face: -1, ax: 0.577, ay: 0.506, recolor: 1, frames: 6, end: 1 },
+    fishman: { face: -1, ax: 0.581, ay: 0.533, recolor: 1, frames: 6, end: 1 },
+    split: { face: -1, ax: 0.556, ay: 0.475, recolor: 1, frames: 6, end: 1 },
+    dragon: { face: -1, ax: 0.555, ay: 0.541, recolor: 1, frames: 6, end: 1 },
+    possessed_ghost: { face: -1, ax: 0.571, ay: 0.565, recolor: 1, frames: 6, end: 1 },
     skeleton: { face: -1, ax: 0.5, ay: 0.5 }, loach_fish: { face: -1, ax: 0.5, ay: 0.5 },
     catfish: { face: -1, ax: 0.514, ay: 0.622, frames: 8 }, turtle: { face: -1, ax: 0.539, ay: 0.524, frames: 4 },
     catpaw: { face: 1, ax: 0.5, ay: 0.8 }, cat: { face: 1, ax: 0.5, ay: 1 },
+    // v23.2：磨きすぎ・石化・大往生・寿司・ハト（6コマ）とカモメ（羽ばたき4コマ）
+    overpolished: { face: -1, ax: 0.572, ay: 0.559, recolor: 1, frames: 6, end: 1 },
+    stone: { face: -1, ax: 0.55, ay: 0.52, recolor: 1, frames: 6, end: 1 },
+    oldage: { face: -1, ax: 0.512, ay: 0.476, recolor: 1, frames: 6, end: 1 },
+    sushi: { face: 1, ax: 0.504, ay: 0.634, recolor: 1, frames: 6, end: 1 },
+    pigeon: { face: -1, ax: 0.583, ay: 0.629, recolor: 1, frames: 6, end: 1 },
+    gull: { face: -1, ax: 0.487, ay: 0.492, frames: 4 },
     tanishi_sheet: { face: 1, ax: 0.5, ay: 1, frames: 8 }
   };
   // 絵の大きさ（1コマ）と基準点
@@ -2615,19 +2622,7 @@
       { spiky: true, eyes: 'x', mouth: 'tongue', roll: 0.25, spark: true }, { spiky: true, eyes: 'x', roll: 0.5, spark: true },
       { spiky: true, eyes: 'x', roll: 0.75, spark: true }, { spiky: true, eyes: 'x', flip: true, spark: true, bolt: true, sy: 0.95 }
     ], { variant: 'shock' });
-    // v22 磨きすぎ：泡でゴシゴシ → 尾のほうから色がぬけて白くなる → ピカー！ → ピカピカすぎて体が透けていき、きらきらだけ残る
-    var WH = { white: true, shine: true };
-    dieSeq('overpolished', [
-      { eyes: 'happy', mouth: 1, fx: [['bubbles', 0]] }, { eyes: 'closed', mouth: 'smile', blush: true, dx: 1, fx: [['bubbles', 1]] },
-      { eyes: 'closed', mouth: 'smile', blush: true, dx: -1, wipe: [WH, 0.15], fx: [['bubbles', 2]] },
-      { eyes: 'happy', mouth: 'grin', wipe: [WH, 0.3], dx: 1, fx: [['bubbles', 0]] }, { eyes: 'closed', mouth: 'grin', wipe: [WH, 0.45], dx: -1, fx: [['bubbles', 1]] },
-      { eyes: 'wide', mouth: 'o', wipe: [WH, 0.6], mark: '?' }, { eyes: 'surprised', mouth: 'o', wipe: [WH, 0.78], dx: 1, fx: [['bubbles', 2]] },
-      { eyes: 'surprised', mouth: 'o', wipe: [WH, 0.95] },
-      { white: true, shine: true, eyes: 'sparkle', mouth: 'grin', fx: [['burst', 0]] }, { white: true, shine: true, sparkle: true, eyes: 'sparkle', mouth: 'grin', dy: -1, fx: [['burst', 1]] },
-      { white: true, shine: true, sparkle: true, eyes: 'wide', mouth: 'o', a: 0.8, fx: [['sparkle', 0]] },
-      { white: true, shine: true, sparkle: true, eyes: 'wide', mouth: 'o', a: 0.62, fx: [['sparkle', 1]] },
-      { white: true, shine: true, sparkle: true, eyes: 'dizzy', mouth: 'o', a: 0.48, fx: [['sparkle', 1]] }
-    ], { white: true, shine: true, sparkle: true, eyes: 'x', mouth: 'o', a: 0.36, fx: [['sparkle', 1]] });    dieSeq('dizzy', [
+    dieSeq('dizzy', [
       { eyes: 'sparkle', mouth: 'grin' },
       { turnF: 1, eyes: 'wide', mouth: 'o', fx: [['spin', 0]] }, { turnF: 2, eyes: 'dizzy', mouth: 'o', fx: [['spin', 1]] },
       { turnF: 3, eyes: 'dizzy', mouth: 'wavy', fx: [['spin', 2]] }, { turnF: 4, eyes: 'dizzy', mouth: 'wavy', fx: [['spin', 0]] },
@@ -2736,13 +2731,6 @@
       { eyes: 'dizzy', mouth: 'o', r: 1.8, sc: 0.95, dy: -9 }, { eyes: 'dizzy', mouth: 'wavy', r: 2.6, sc: 0.9, dy: -10 },
       { eyes: 'dizzy', mouth: 'o', r: 3.4, sc: 0.85, dy: -11 }
     ], { variant: 'abducted' });
-    dieSeq('sushi', [
-      { eyes: 'side', brows: 'worried', sweat: true }, { eyes: 'side', brows: 'worried', sweat: true, dx: -1 }, { surpF: 1, mark: '!' },
-      m(TW, { swimF: 0, dx: -2 }), m(TW, { swimF: 2, dx: -3 }), { eyes: 'tight', mouth: 'wavy', sx: 0.9, dx: -2, fx: [['shiver', 0]] },
-      { eyes: 'x', mouth: 'o', sx: 1.1, sy: 0.9, fx: [['burst', 0]] }, { eyes: 'x', mouth: 'o', sx: 1.15, sy: 0.8 },
-      { eyes: 'x', mouth: 0, sx: 1.12, sy: 0.75, fx: [['poof', 0]] },
-      { sushi: true, sx: 1.1, sy: 0.9, fx: [['poof', 1]] }, { sushi: true, sx: 1.05, sy: 0.95, fx: [['sparkle', 0]] }
-    ], { variant: 'sushi' });
     dieSeq('meteor', [
       { look: 'up', mark: '?' }, { look: 'up', eyes: 'wide' }, { surpF: 1, mark: '!' },
       { eyes: 'teary', brows: 'worried', mouth: 'o', sweat: true, sy: 0.92, dy: 1 },
@@ -2769,14 +2757,6 @@
       { eyes: 'tight', mouth: 'wavy', mix: [MOSS_P, 0.45], wipe: [MS, 0.8] },
       { moss: true, eyes: 'wide' }, { moss: true, eyes: 'normal' }, { moss: true, eyes: 'sleepy' }, { moss: true, eyes: 'sleepy', sy: 0.95, dy: 1 }
     ], { variant: 'moss', eyes: 'x' });
-    dieSeq('stone', [
-      {}, { eyes: 'wide', brows: 'worried', sweat: true }, { eyes: 'wide', brows: 'worried', sweat: true, dx: 1, fx: [['shiver', 0]] },
-      { eyes: 'wide', brows: 'worried', sweat: true, dx: -1, mix: ['stone', 0.15], fx: [['shiver', 1]] },
-      { eyes: 'tight', mouth: 'wavy', mix: ['stone', 0.3], sx: 0.95, sy: 1.03 },
-      { eyes: 'wide', brows: 'worried', wipe: [ST, 0.25] }, { eyes: 'wide', mouth: 'o', wipe: [ST, 0.45] }, { eyes: 'wide', mouth: 'o', wipe: [ST, 0.65] },
-      { eyes: 'wide', wipe: [ST, 0.85] }, { stone: true, eyes: 'wide', fx: [['burst', 0]] }, { stone: true, eyes: 'wide', sy: 0.97, dy: 1 },
-      { stone: true, eyes: 'normal', look: 'back' }, { stone: true, eyes: 'normal', look: 'up' }
-    ], { variant: 'stone' });
     // v22 空腹でスケルトン：ぐぅ〜 → だんだん やせる → げっそり（肋骨・背骨が浮く）→ ガクッ → 身がとけて骨だけに
     dieSeq('skeleton', [
       {}, { eyes: 'sleepy', mouth: 'wavy', fx: [['growl', 0]] }, m(TW, { fx: [['growl', 1]] }),
@@ -2793,14 +2773,6 @@
       { belly: true, eyes: 'surprised', mouth: 'o', sweat: true, sx: 1.06, sy: 1.08 }, { belly: true, eyes: 'closed', mouth: 'yawn', fx: [['burp', 0]] },
       { belly: true, eyes: 'dizzy', mouth: 'wavy', sweat: true }
     ], { variant: 'overeat', eyes: 'x' });
-    dieSeq('oldage', [
-      {}, { eyes: 'sleepy' }, { eyes: 'sleepy', mix: ['old', 0.4] }, { eyes: 'sleepy', mix: ['old', 0.8] },
-      { wrinkles: true, eyes: 'sleepy' }, { wrinkles: true, eyes: 'sleepy', sy: 0.96, dy: 1 },
-      { wrinkles: true, eyes: 'closed', mouth: 'smile', sy: 0.95, r: 0.05, dy: 1 }, { wrinkles: true, eyes: 'calm', mouth: 'smile', r: 0.1, dy: 1 },
-      { wrinkles: true, eyes: 'calm', mouth: 'smile', r: 0.12, dy: 2 }, { wrinkles: true, eyes: 'calm', mouth: 'smile', r: 0.08, dy: 2, fx: [['soul', 0]] },
-      { wrinkles: true, eyes: 'calm', mouth: 'smile', r: 0.04, dy: 2, fx: [['soul', 1]] },
-      { wrinkles: true, eyes: 'x', roll: 0.5, dy: 1 }, { wrinkles: true, eyes: 'x', roll: 0.75 }
-    ], { variant: 'oldage', eyes: 'x', flip: true });
     dieSeq('golden', [
       {}, { eyes: 'closed', mouth: 'smile', fx: [['sparkle', 0]] }, { eyes: 'closed', mouth: 'smile', dy: -1, fx: [['sparkle', 1]] },
       { eyes: 'wide', mark: '?', wipe: [GD, 0.15] }, { eyes: 'surprised', mouth: 'o', wipe: [GD, 0.3] }, { eyes: 'surprised', mouth: 'o', wipe: [GD, 0.45], dx: 1 },
@@ -3126,11 +3098,6 @@
       { photo: true, sx: 0.3 }, { photo: true, sx: 0.7 }, { photo: true, fx: [['sparkle', 0]] }, { photo: true, dx: 1 }, { photo: true, dx: -1 }
     ], { photo: true });
     // ハトにされた：シルクハットをかぶせられて…ポン（ハトが出るのは main.js が帽子を上げてから）
-    dieSeq('pigeon', [
-      { look: 'up', mark: '?' }, { look: 'up', eyes: 'wide' }, { surpF: 1, mark: '!' },
-      m(TW, { sweat: true, dx: -1 }), m(TW, { sweat: true, dx: 1 }), { eyes: 'tight', mouth: 'wavy', sc: 0.9 },
-      { draw: 'pigeon', flap: 2, sc: 0.7 }, { draw: 'pigeon', flap: 0 }, { draw: 'pigeon', flap: 1 }, { draw: 'pigeon', flap: 2 }, { draw: 'pigeon', flap: 0, dy: -1 }
-    ], { draw: 'pigeon', flap: 1, dy: 1 });
     // 星になった：かがむ → 発射（頭が上）→ くるくる小さく → 星
     dieSeq('star', [
       { eyes: 'sparkle', mouth: 'grin' }, { eyes: 'closed', mouth: 'grin', sx: 1.15, sy: 0.8, dy: 2 }, { eyes: 'closed', mouth: 'grin', sx: 1.25, sy: 0.72, dy: 3 },
@@ -4021,33 +3988,12 @@
     for (var j = 0; j < 6; j++) { var b = j * 1.05; rect(ctx, x + R(Math.cos(b) * r * (0.3 + t)), y + R(Math.sin(b) * r * (0.3 + t)), 2, 2, '#d4f8ee'); }
   }
   // 鳥（約26x14、2コマで羽ばたく）。右向き
-  var BIRD = [];
-  function birdGrid(fr) {
-    if (BIRD[fr]) return BIRD[fr];
-    var g = new Grid(32, 24, 16, 12);
-    var Wc = '#fff6dc', Gr = '#d8b485', Bk = '#865336', Bk2 = '#ff9c27';
-    var wy = fr ? 4 : -8; // 羽先の高さ
-    g.stamp(function (x, y) {
-      var px = x + 0.5, py = y + 0.5;
-      // 羽（付け根 (-2,0)〜羽先 (±?,wy)）
-      for (var side = 0; side < 2; side++) {
-        var ax = -1, ay = 0, bx = side ? -11 : 3, by = side ? wy : wy * 0.8;
-        var d2 = segDist2(px, py, ax, ay, bx, by);
-        var lim = 2.6 - 1.6 * Math.min(1, ((px - ax) * (px - ax) + (py - ay) * (py - ay)) / ((bx - ax) * (bx - ax) + (by - ay) * (by - ay)));
-        if (d2 <= Math.max(0.5, lim)) return Math.abs(px - bx) + Math.abs(py - by) < 2.5 ? Bk : Gr;
-      }
-      var dx = (px - 0) / 7, dy = (py - 2) / 3.2; if (dx * dx + dy * dy <= 1) return py > 3 ? Gr : Wc; // 胴
-      var hx = px - 7, hy = py + 1; if (hx * hx + hy * hy <= 16) return Wc; // 頭
-      if (px > -11 && px < -6 && py > 1 && py < 4 && py - 2 < (-6 - px) * 0.6) return Wc; // 尾
-      if (px >= 9 && px <= 13.5 && py >= 0 && py <= 2.6) return Bk2; // くちばし
-      return null;
-    }, O);
-    popEye(g, 7, -2, 2.8, 1);
-    g.K = O; g.keep = [O, '#ffffff'];
-    return (BIRD[fr] = g);
-  }
   // 空を飛ぶ鳥。くちばしの先は x + 13。
-  function drawBird(ctx, x, y, t, dir) { blit(ctx, birdGrid(Math.floor((t || 0) * 6) & 1), x, y, { mirror: dir < 0 }); }
+  function drawBird(ctx, x, y, t, dir, carry) {   // v23.2：ユーザーの絵のカモメ。carry＝くわえた金魚の色
+    var d = dir < 0 ? -1 : 1;
+    if (carry) drawFish(ctx, x + d * 19, y + 9, { scale: 0.5, color: carry, eyes: 'x', rot: d * 1.3, dir: d, t: 0, fx: false });
+    drawAsset(ctx, 'gull', x, y, { dir: d, frame: Math.floor((t || 0) * 8) & 3 });
+  }
 
   // ---------- 小物 ----------
   var PELLETS = {
@@ -4617,7 +4563,7 @@
 
   // 死因ミニ絵（札・図鑑で使用）。size<=1: 図鑑用の小さな絵（魚は scale 0.5*size）
   // size>1: 小物つきの場面（約 31*size x 21*size に収まる。size=2 で魚は等倍）
-  var ICON_ASSET = { giant: 'giant', overeat: 'overeat', fishman: 'fishman', split: 'split', dragon: 'dragon', skeleton: 'skeleton', possessed: 'possessed_ghost' };
+  var ICON_ASSET = { giant: 'giant', overeat: 'overeat', fishman: 'fishman', split: 'split', dragon: 'dragon', skeleton: 'skeleton', possessed: 'possessed_ghost', overpolished: 'overpolished', stone: 'stone', oldage: 'oldage', sushi: 'sushi', pigeon: 'pigeon' };
   var iconColor = 'orange';
   function drawCauseIcon(ctx, x, y, id, size, t) {
     size = size || 1; t = t || 0;
@@ -4633,7 +4579,6 @@
         return;
       }
       var boxW = 60 * u, boxH = 40 * u, k = Math.min(boxW / aw, boxH / ah);
-      k = big ? Math.max(0.25, Math.floor(k * 4) / 4) : k;
       var ax = inf.ax == null ? 0.5 : inf.ax, ay = inf.ay == null ? 0.5 : inf.ay;
       if (big && (id === 'overeat' || id === 'fishman')) { rect(ctx, x - R(30 * u), y + R(17 * u), R(60 * u), 1, '#a86a3a'); rect(ctx, x - R(30 * u), y + R(18 * u), R(60 * u), R(3 * u), SAND); }
       drawAsset(ctx, an, x + R((ax - 0.5) * aw * k), y + R((ay - 0.5) * ah * k), { color: iconColor, scale: k });
@@ -4684,11 +4629,13 @@
         F(6, 9, { eyes: 'x', sx: 1.3, sy: 0.35, scale: fs * 0.9 });
         drawTurtleLook(ctx, x - R(11 * u), y + R(3 * u), 0, { dir: 1, look: 1, scale: 0.9 * u });
         break;
-      case 'loach':
-        react(-10, -4, { dir: 1, rot: 1.18, eyes: 'side', scale: fs * 0.83 });
-        sand(10);
-        drawLoach(ctx, x + R(16 * u), y + R(6 * u), t, { dir: -1, dig: 0.6, scale: 0.65 * u, still: true });
-        drawMark(ctx, x + R(2 * u), y - R(14 * u), '?', t, u);
+      case 'loach':   // v23.2：まねして頭から砂にささり、尾だけ出てばたばた。となりでドジョウが顔を出す
+        F(-6, 4, { dir: 1, rot: 1.5, eyes: 'x', scale: fs * 0.95 });
+        sand(6); rect(ctx, x - R(34 * u), y + R(17 * u), R(68 * u), R(8 * u), SAND);
+        prop(-6, 6, 1, function (ctx) { rect(ctx, -10, -1, 3, 1, SAND_D); rect(ctx, 6, -1, 3, 1, SAND_D); rect(ctx, -14, -3, 1, 1, SAND); rect(ctx, 11, -4, 1, 1, SAND); });
+        drawLoach(ctx, x + R(19 * u), y + R(5 * u), t, { dir: -1, dig: 0.55, scale: 0.7 * u, still: true });
+        drawMark(ctx, x - R(22 * u), y - R(16 * u), '?', t, u);
+        rect(ctx, x - R(15 * u), y - R(19 * u), 1, R(3 * u), '#ffffff'); rect(ctx, x + R(3 * u), y - R(19 * u), 1, R(3 * u), '#ffffff');
         break;
       case 'catfish':
         drawCatfish(ctx, x + R(9 * u), y + R(1 * u), t, { dir: -1, open: 1, scale: 0.9 * u });
@@ -4752,12 +4699,11 @@
         flash(-21, -12); flash(13, -12); flash(18, 13);
         if (big) drawBubble(ctx, x - 24, y + 12, 3);
         break;
-      case 'bird':
-        if (big) surf(14);
-        prop(0, -5, 1.26, function (ctx) { drawBird(ctx, 0, 0, 0, 1); });
-        react(7, 8, { rot: -0.75, scale: fs * 0.81 });
-        prop(0, -5, 1.26, function (ctx) { rect(ctx, 10, 1, 4, 2, O); rect(ctx, 10, 1, 3, 1, '#ff9c27'); });
-        flash(-18, 0);
+      case 'bird':   // v23.2：カモメが金魚をくわえて水面の上を飛んでいく
+        if (big) surf(16);
+        drawFish(ctx, x - R(20 * u), y + R(8 * u), { scale: fs * 0.62, color: iconColor, eyes: 'x', rot: -1.3, dir: -1, t: 0, fx: big });
+        drawAsset(ctx, 'gull', x + R(2 * u), y - R(4 * u), { scale: 1.1 * u, frame: 0 });
+        flash(-24, -14);
         break;
       case 'dizzy':
         F(0, 4, { rot: -0.19, stars: false, scale: fs * 0.9 });
@@ -4868,12 +4814,12 @@
         flash(21, -11); flash(-17, 11);
         if (!big) { rect(ctx, x - 6, y - 7, 1, 3, '#ffffff'); rect(ctx, x - 7, y - 6, 3, 1, '#ffffff'); }
         break;
-      case 'hermit':
-        if (big) sand(12);
-        react(-5, 3, { hermit: false, eyes: 'angry', mouth: 'pout', scale: fs * 0.94 });
-        prop(23, -10, 0.67, function (ctx) { drawNetMini(ctx, 0, 7, false); });
-        prop(-6, 15, 1, function (ctx) { ellipse(ctx, 0, 3, 21, 6, SAND_D); ellipse(ctx, 0, 2, 19, 5, SAND); });
-        drawMark(ctx, x - R(23 * u), y - R(10 * u), 'anger', t, u);
+      case 'hermit':   // v23.2：砂山にもぐって目だけ出し、網をにらむ
+        if (big) sand(14);
+        F(-4, 5, { eyes: 'annoyed', brows: 'angry', mouth: 'pout', scale: fs * 1.05, dir: 1 });
+        prop(-4, 15, 1, function (ctx) { ellipse(ctx, 0, 0, 31, 11, SAND_D); ellipse(ctx, 0, 1, 30, 10, SAND); rect(ctx, -12, -3, 2, 1, SAND_D); rect(ctx, 6, -1, 2, 1, SAND_D); rect(ctx, 16, 2, 1, 1, SAND_D); });
+        prop(21, -12, 0.67, function (ctx) { drawNetMini(ctx, 0, 7, false); });
+        drawMark(ctx, x - R(22 * u), y - R(12 * u), 'anger', t, u);
         break;
       case 'giant':
         F(0, 1, { eyes: 'closed', mouth: 'o', scale: fs * 1.22, rot: 0.65, dir: -1 });

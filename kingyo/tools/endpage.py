@@ -10,7 +10,7 @@ def how(no):
     return (m.group(1), m.group(2)) if m else ('', '')
 
 
-ART = {'overeat', 'split', 'dragon', 'fishman', 'giant', 'possessed', 'skeleton', 'catfish', 'squashed', 'cat', 'loach'}
+ART = {'overeat', 'split', 'dragon', 'fishman', 'giant', 'possessed', 'skeleton', 'catfish', 'squashed', 'cat', 'loach', 'overpolished', 'stone', 'oldage', 'sushi', 'pigeon', 'bird'}
 uri = lambda f: 'data:image/png;base64,' + base64.b64encode(open('endlooks/' + f, 'rb').read()).decode()
 items = []
 for it in idx:

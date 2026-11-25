@@ -15,6 +15,11 @@ const files = ['logic.js', 'sprites.js', 'main.js'];
   const mins = [];
   for (const s of js) { const r = await minify(s, { ecma: 2020, compress: { passes: 2 }, mangle: true, format: { comments: false, ascii_only: false } }); mins.push(r.code); }
   const min = tag(mins.join('\n'));
+  // 遊べるページには見本再生のコード（/*DEMO*/〜/*/DEMO*/）を入れない
+  const jsGame = js.map(c => c.replace(/\/\*DEMO\*\/[\s\S]*?\/\*\/DEMO\*\//g, ''));
+  const minsG = [];
+  for (const c of jsGame) { const r = await minify(c, { ecma: 2020, compress: { passes: 2 }, mangle: true, format: { comments: false, ascii_only: false } }); minsG.push(r.code); }
+  const minG = tag(minsG.join('\n'));
   const minCss = h => h.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\n\s+/g, '\n');
   for (const page of ['game', 'sample']) {
     const t = fs.readFileSync(path.join(src, page + '.template.html'), 'utf8');
@@ -24,7 +29,7 @@ const files = ['logic.js', 'sprites.js', 'main.js'];
       const m = tm.match(/<script>\n\{([\s\S]*?)\n\}\n<\/script>/);
       if (m) { const r = await minify('{' + m[1] + '}', { ecma: 2020, compress: true, mangle: true }); tm = tm.replace(m[0], () => '<script>' + r.code + '</script>'); }
     }
-    fs.writeFileSync(path.join(out, page + '.html'), minCss(tm).replace('<!--SCRIPTS-->\n', () => min));
+    fs.writeFileSync(path.join(out, page + '.html'), minCss(tm).replace('<!--SCRIPTS-->\n', () => page === 'game' ? minG : min));
   }
   fs.writeFileSync(path.join(out, 'logic.js'), js[1]);
   for (const f of fs.readdirSync(out)) console.log(f, fs.statSync(path.join(out, f)).size);
