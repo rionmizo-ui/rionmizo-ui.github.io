@@ -1087,44 +1087,6 @@ var GoldfishGame = (function () {
         for (let k = 0; k < 3; k++) { sfx('pet'); yield* tween(0.16, p => { finger.x += Math.sin(p * Math.PI * 2) * 1.5; }); }
         yield* fingerOut(0.4); fish.ex = {}; fish.free = true; fish.tx = fish.x; fish.ty = fish.y; break;
       }
-      case 'daruma': {      // だるまさんがころんだ：しのび足で近づき、ころんだ！で止まる
-        const side = fish.x < 80 ? 1 : -1, fy = clamp(fish.y, 100, 160);
-        yield* swimTo(side > 0 ? 32 : 128, fy, 55);
-        fish.free = false; fish.dir = side; yield 0.3;
-        yield* fingerTo(side > 0 ? 130 : 30, fy - 24, 0.6);
-        const POSES = [
-          { rot: side * 0.5, ex: { eyes: 'wide', mouth: 'o', sweat: true } },
-          { rot: -side * 0.45, ex: { eyes: 'closed', mouth: 'wavy', sweat: true }, oy: 2 },
-          { rot: side * 0.2, ex: { eyes: 'tight', mouth: 'grin', sweat: true, sx: 1.1, sy: 0.9 }, oy: -3 },
-        ];
-        for (let k = 0; k < 3; k++) {
-          fx.push({ k: 'text', s: 'だるまさんが…', x: 80, y: fy - 46, t: T, d: 1.2, c: '#ffffff' }); sfx('blink');
-          fish.ex = { eyes: 'side', mouth: 'smile' };
-          const x0 = fish.x;
-          yield* tween(1.0, p => { fish.x = x0 + side * 22 * ease(p); fish.swimPh += 0.12; fish.oy = (Math.floor(p * 8) & 1) ? -1 : 0; });
-          const P = POSES[k];
-          fish.rot = P.rot; fish.ex = P.ex; fish.oy = P.oy || 0; fish.sq = 1;
-          fx.push({ k: 'text', s: 'ころんだ！', x: 80, y: fy - 46, t: T, d: 0.9, c: '#ffd23a', big: true }); sfx('pu');
-          yield* tween(0.15, p => { finger.x += side * Math.sin(p * Math.PI) * 2; });   // ふり返る指
-          yield* tween(0.9, p => { fish.ox = (Math.floor(p * 18) & 1); });               // ぷるぷる…
-          fish.ox = 0; fish.rot = 0; fish.oy = 0;
-          if (k === 2 && acc === 'daruma') {
-            fish.opts = { swimF: 0, eyes: 'surprised', mouth: 'o' };
-            yield* fingerOut(0.4); yield 0.55;
-            fish.ex = {}; fish.opts = { variant: 'daruma' }; sfx('koton');
-            fx.push({ k: 'text', s: 'かちん！', x: fish.x, y: fy - 30, t: T, d: 1, c: '#ffd23a' });
-            yield 0.7;
-            return yield* deathSettle('daruma');
-          }
-        }
-        fish.ex = { eyes: 'sparkle', mouth: 'grin' };
-        const x1 = fish.x, tx = finger.x - side * 22;
-        yield* tween(0.25, p => { fish.x = x1 + (tx - x1) * ease(p); });
-        sfx('pet'); sfx('blink'); fish.sq = 1;
-        fx.push({ k: 'text', s: 'タッチ！', x: finger.x, y: finger.y - 12, t: T, d: 1.0, c: '#ffd23a', big: true });
-        yield* fingerPoke(0, -4); fish.ex = { eyes: 'closed', mouth: 'grin', mark: 'heart' }; yield 0.4;
-        yield* fingerOut(0.4); fish.ex = {}; fish.free = true; fish.tx = fish.x; fish.ty = fish.y; break;
-      }
       case 'moonwalk': {    // ムーンウォーク：前を向いたまま、砂の上をうしろへすべる
         const fy = FLOOR - 12;
         yield* swimTo(clamp(fish.x, 56, 104), fy, 50);
@@ -3300,7 +3262,7 @@ var GoldfishGame = (function () {
   // ---------------- 図鑑の操作表示・くわしく ----------------
   const HINTS = {
     instant: '入ってきた瞬間…運しだい', poison: '怪しい粒も食べちゃう', frozen: '冷たいものを食べると', flower: '種を飲みこむと', burnt: '熱いものを食べると', shock: 'ビリビリする粒',
-    sucked: '汚れた水槽の掃除で', overpolished: 'きれいなガラスを磨きすぎると', cat: '撫でる手が…', bird: 'ジャンプやロケットで水面を飛び出すと', cleanfreak: '指でなでられると', daruma: 'だるまさんがころんだで止まりすぎると', dizzy: '回りすぎると', bubblegone: '大きな泡', floataway: 'ふくらみすぎ',
+    sucked: '汚れた水槽の掃除で', overpolished: 'きれいなガラスを磨きすぎると', cat: '撫でる手が…', bird: 'ジャンプやロケットで水面を飛び出すと', cleanfreak: '指でなでられると', dizzy: '回りすぎると', bubblegone: '大きな泡', floataway: 'ふくらみすぎ',
     netted: '網を入れすぎると', stuck: 'ガラスにごつん', hiccupfly: 'しゃっくり', knotted: 'しっぽ追いか輪くぐり', flat: 'くしゃみの反動', nowake: 'うたた寝か死んだふり',
     jumpout: '地震で網が間に合わない', abducted: '空から光が…', sushi: '板前さんの手', meteor: '空から燃える石', possessed: 'おばけが来たら',
     haircut: 'カニに近づきすぎると', squashed: 'カメのしっぽを引っぱると', loach: 'ドジョウのまねをすると', catfish: 'ナマズがあくびをしたら',
@@ -3678,7 +3640,7 @@ var GoldfishGame = (function () {
       if (typeof r.value === 'function' && !r.value()) { d.cond = r.value; return; }
     }
   }
-  const TOUCH_OF = { cat: 'pet', cleanfreak: 'pet', daruma: 'daruma', bird: 'jump', dizzy: 'spin', bubblegone: 'bubble', floataway: 'puff', knotted: 'hoop', nowake: 'deadplay', star: 'rocket' };
+  const TOUCH_OF = { cat: 'pet', cleanfreak: 'pet', bird: 'jump', dizzy: 'spin', bubblegone: 'bubble', floataway: 'puff', knotted: 'hoop', nowake: 'deadplay', star: 'rocket' };
   function demoGesture(name) {
     g.newFish = (orig => () => { orig(); g.s.phase = 'alive'; return { instantDeath: false }; })(g.newFish.bind(g));
     g.visitorAccident = () => null;
@@ -3755,7 +3717,7 @@ var GoldfishGame = (function () {
     g.net = () => ({ caught: true, smug: false });
     g.decideEnding = () => { o.decideEnding(); g.s.cause = id; g.s.phase = 'ending'; return id; };
     const ACT = { poison: 'feed', frozen: 'feed', flower: 'feed', burnt: 'feed', shock: 'feed', sucked: 'clean', overpolished: 'clean',
-      cat: 'touch', cleanfreak: 'touch', daruma: 'touch', bird: 'touch', dizzy: 'touch', bubblegone: 'touch', floataway: 'touch', netted: 'net', star: 'touch' };
+      cat: 'touch', cleanfreak: 'touch', bird: 'touch', dizzy: 'touch', bubblegone: 'touch', floataway: 'touch', netted: 'net', star: 'touch' };
     director = { wait: 0, cond: null, it: (function* () {
       for (;;) {
         nextFish(); gestAt = T + 999; evAt = T + 999;

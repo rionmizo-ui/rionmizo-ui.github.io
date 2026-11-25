@@ -11,7 +11,7 @@ const GROUP = id => {
   if (id === 'instant') return '登場';
   if (['poison', 'frozen', 'flower', 'burnt', 'shock'].includes(id)) return '餌';
   if (['sucked', 'overpolished'].includes(id)) return '掃除';
-  if (['cat', 'bird', 'dizzy', 'bubblegone', 'floataway', 'star', 'cleanfreak', 'daruma'].includes(id)) return 'ふれあい・芸';
+  if (['cat', 'bird', 'dizzy', 'bubblegone', 'floataway', 'star', 'cleanfreak'].includes(id)) return 'ふれあい・芸';
   if (id === 'netted') return '網';
   if (['stuck', 'hiccupfly', 'knotted', 'flat', 'nowake', 'overhere'].includes(id)) return 'しぐさ（放置）';
   if (['haircut', 'squashed', 'loach', 'catfish'].includes(id)) return 'お客さん（放置）';

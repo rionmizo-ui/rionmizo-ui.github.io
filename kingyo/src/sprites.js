@@ -2373,7 +2373,6 @@
     squashed: { eyes: 'tight', mouth: 'wavy', sx: 1.35, sy: 0.4, wag: 0 },
     loach: { eyes: 'side', mouth: 'o' },
     cleanfreak: { white: true, shine: true, eyes: 'closed', mouth: 'o', flip: true },
-    daruma: { daruma: true },
     giant: { eyes: 'closed', mouth: 'o', wag: 0 },
     catfish: { eyes: 'x', mouth: 'o', scale: 0.5 },
     instant: { eyes: 'x', flip: true, mouth: 'tongue' },
@@ -2821,10 +2820,6 @@
       { eyes: 'tight', mouth: 'wavy', palette: 'sky', dx: -3, r: -0.2 },
       { eyes: 'tight', mouth: 'wavy', white: true, dx: 3, r: 0.2 }
     ], { variant: 'cleanfreak' });
-    dieSeq('daruma', [
-      { eyes: 'side', mouth: 'smile' }, { eyes: 'surprised', mouth: 'o', wag: 0 },
-      { eyes: 'surprised', mouth: 'o', wag: 0, dx: 1 }
-    ], { variant: 'daruma' });
     dieSeq('babies', [
       {}, { eyes: 'surprised', mouth: 'o', sy: 1.06 }, { belly: true, eyes: 'wide', mouth: 'o' }, { belly: true, eyes: 'wide', mouth: 'o', sweat: true, dx: 1 },
       { belly: true, eyes: 'tight', mouth: 'wavy', sweat: true, sx: 1.05, sy: 1.05 }, { belly: true, eyes: 'tight', mouth: 'wavy', sweat: true, sx: 1.08, sy: 1.08, dx: -1, fx: [['shiver', 0]] },
@@ -3534,7 +3529,6 @@
     // main.js の「分裂」は体のうしろに逆向きの頭を重ねて描く（v15 では静止形そのものが2つ頭なので、その重ね描きは描かない）
     if (o.variant === 'split' && o.split === false && o.turn === 0 && (+o.scale || 1) < 1 && o.sx === 1 && o.sy === 1) return;
     if (o.variant && VARIANTS[o.variant]) o = merge(VARIANTS[o.variant], o);
-    if (o.daruma) return drawDaruma(ctx, x, y, o.scale || 1);
     if (o.photo) return drawPolaroid(ctx, x, y, o);
     if (o.boiled) return drawBoiled(ctx, x, y, o);
     if (o.balloon && !o.puff) o = merge(o, { puff: true });
@@ -4894,10 +4888,6 @@
         drawBubble(ctx, x + R(18 * u), y - R(8 * u), big ? 3 : 2);
         flash(-7, -13);
         break;
-      case 'daruma':
-        F(0, 0, { scale: fs * 1.05 });
-        flash(17, -10);
-        break;
       // --- 追加：お客さんイベントの突然死 ---
       case 'abducted':
         prop(0, -5, 1, function (ctx) { drawBeam(ctx, 0, 0, 26, t, 43); });
@@ -5901,26 +5891,7 @@
     friendOval(g, x, y, width, height, FRIEND_RED, false);
   }
 
-  function drawDaruma(ctx, x, y, scale) {
-    var sprite = popGet('daruma', function () {
-      var g = new Grid(40, 42, 20, 21);
-      g.stamp(function (px, py) {
-        if (!pE(px, py, 0, 0, 15, 17)) return null;
-        return shade3(px, py, 0, 0, 17, '#f54338', '#c52b37', '#ff7963');
-      }, PK, [-17, -19, 17, 19]);
-      friendOval(g, 0, -4, 10.5, 9, '#ff9a39');
-      popEye(g, -4, -6, 3.1, 1);
-      popEye(g, 4, -5, 3.6, -1);
-      friendMouth(g, 1, 0, 2.7, 1.4);
-      popBlush(g, -8, -1);
-      popBlush(g, 6, 0);
-      gline(g, -6, 7, -4, 11, '#ffd75d');
-      gline(g, 0, 7, 0, 12, '#ffd75d');
-      gline(g, 6, 7, 4, 11, '#ffd75d');
-      return g;
-    });
-    blit(ctx, sprite, x, y, { scale: scale });
-  }
+
 
   // ---- 巻貝（原点＝殻と足の中心、右へ進む設計） ----
   function buildSnail(fr, hide) {

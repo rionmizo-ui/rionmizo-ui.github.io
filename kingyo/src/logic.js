@@ -63,7 +63,6 @@ var GoldfishLogic = (function () {
     ['loach',        'まねして抜けなくなった', 'sudden', 'gone'],
     ['catfish',      'ナマズにのまれた', 'sudden', 'gone'],    // ナマズ（v20）
     ['cleanfreak',   '潔癖すぎた',       'sudden', 'float'],
-    ['daruma',       'だるまになった',   'sudden', 'sink'],
     ['bug',          'バグった',         'ending', 'float'],
     ['duck',         'アヒルに交代',     'ending', 'gone'],
     ['moss',         'コケまみれ',       'ending', 'sink'],
@@ -115,7 +114,7 @@ var GoldfishLogic = (function () {
   //  登場即死 8→2%、餌の事故 各1→0.4%、掃除 吸い込み3→6%・磨きすぎ2→1.2%、網 5→6%、しぐさ 8→20%
   //  ふれあいの事故は反応ごと（TOUCH_P）。撫でる(猫)は反応が出やすいぶん低め、ジャンプ・膨らむは高め
   const P = { instant: 0.02, feedEach: 0.004, cleanEach: 0.12, overpolish: 0.012, touch: 0.12, net: 0.06, gesture: 0.18, visit: 0.22 };   // v23 P6：ひと休み中は事故が起きないぶん、しぐさ 8→18%・お客さん 12→22%。掃除の吸い込み 6→12%（一度も出ていなかった）   // v22: お客さん 15→12%（なかよしの出番をふやす）   // v20: しぐさ 20→8%・お客さん 30→15%（出会う回数がふえたぶん下げた。idle_sim2.js と自動プレイで調整）
-  const TOUCH_P = { cat: 0.053, bird: 0.098, dizzy: 0.075, bubblegone: 0.09, floataway: 0.105, knotted: 0.068, nowake: 0.09, star: 0.068, cleanfreak: 0.075, daruma: 0.075, rocketBird: 0.075 };   // v23 P6：芸を20→15種に減らしたぶん（死ぬ芸に当たる回数が約1.33倍）、全部を0.75倍に
+  const TOUCH_P = { cat: 0.053, bird: 0.098, dizzy: 0.075, bubblegone: 0.09, floataway: 0.105, knotted: 0.068, nowake: 0.09, star: 0.068, cleanfreak: 0.075, rocketBird: 0.075 };   // v23 P6：芸を20→15種に減らしたぶん（死ぬ芸に当たる回数が約1.33倍）、全部を0.75倍に
   const P_SPEC = { instant: 0.05, feedEach: 0.005, cleanEach: 0.0125, touch: 0.025, net: 0.025, gesture: 0.03 };
   const GROW_SEC = 6;     // v20: のんびり成長。放置で泳いでいると6秒ごとにゲージ+1（idle_sim2.js の最適値）
   const HUNGER_SEC = 5;    // 通常遊泳で腹持ちが1粒分減る秒数（企画書10秒。お腹を空きやすく）
@@ -127,10 +126,10 @@ var GoldfishLogic = (function () {
   const FEED_ACC = ['poison', 'frozen', 'flower', 'burnt', 'shock'];      // 各 P.feedEach
   const CLEAN_ACC = ['sucked', 'overpolished'];                           // 各 P.cleanEach
   const TOUCH_ACC = ['cat', 'bird', 'dizzy', 'bubblegone', 'floataway'];  // REACTIONS の先頭5つに対応、P.touch
-  const TRICK_ACC = { hoop: 'knotted', deadplay: 'nowake', rocket: 'star', daruma: 'daruma' };
+  const TRICK_ACC = { hoop: 'knotted', deadplay: 'nowake', rocket: 'star' };
   // ふれあいの反応。先頭5つは企画書の反応（それぞれ事故あり）、残りは追加の芸
   const REACTIONS = ['pet', 'jump', 'spin', 'bubble', 'puff', 'hoop', 'deadplay', 'ball', 'limbo', 'heartswim', 'sing',
-    'sumo', 'rocket', 'daruma', 'moonwalk'];
+    'sumo', 'rocket', 'moonwalk'];
   // 性格（魚ごとにランダム）
   const PERSONAS = [
     { id: 'glutton', name: 'くいしんぼう' }, { id: 'clingy', name: 'あまえんぼう' }, { id: 'neat', name: 'きれいずき' },

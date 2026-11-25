@@ -409,182 +409,170 @@
  },
  {
   "no": 35,
-  "id": "daruma",
-  "name": "だるまになった",
-  "kind": "sudden",
-  "files": [
-   "35_daruma_zoom.png",
-   "35_daruma_screen.png",
-   "35_daruma_fish.png",
-   "35_daruma_card.png"
-  ]
- },
- {
-  "no": 36,
   "id": "bug",
   "name": "バグった",
   "kind": "ending",
   "files": [
-   "36_bug_zoom.png",
-   "36_bug_screen.png",
-   "36_bug_fish.png",
-   "36_bug_card.png"
+   "35_bug_zoom.png",
+   "35_bug_screen.png",
+   "35_bug_fish.png",
+   "35_bug_card.png"
   ]
  },
  {
-  "no": 37,
+  "no": 36,
   "id": "duck",
   "name": "アヒルに交代",
   "kind": "ending",
   "files": [
-   "37_duck_zoom.png",
-   "37_duck_screen.png",
-   "37_duck_fish.png",
-   "37_duck_card.png"
+   "36_duck_zoom.png",
+   "36_duck_screen.png",
+   "36_duck_fish.png",
+   "36_duck_card.png"
   ]
  },
  {
-  "no": 38,
+  "no": 37,
   "id": "moss",
   "name": "コケまみれ",
   "kind": "ending",
   "files": [
-   "38_moss_zoom.png",
-   "38_moss_screen.png",
-   "38_moss_fish.png",
-   "38_moss_card.png"
+   "37_moss_zoom.png",
+   "37_moss_screen.png",
+   "37_moss_fish.png",
+   "37_moss_card.png"
   ]
  },
  {
-  "no": 39,
+  "no": 38,
   "id": "stone",
   "name": "緊張で石化",
   "kind": "ending",
   "files": [
-   "39_stone_zoom.png",
-   "39_stone_screen.png",
-   "39_stone_fish.png",
-   "39_stone_card.png"
+   "38_stone_zoom.png",
+   "38_stone_screen.png",
+   "38_stone_fish.png",
+   "38_stone_card.png"
   ]
  },
  {
-  "no": 40,
+  "no": 39,
   "id": "split",
   "name": "分裂失敗",
   "kind": "ending",
   "files": [
-   "40_split_zoom.png",
-   "40_split_screen.png",
-   "40_split_fish.png",
-   "40_split_card.png"
+   "39_split_zoom.png",
+   "39_split_screen.png",
+   "39_split_fish.png",
+   "39_split_card.png"
   ]
  },
  {
-  "no": 41,
+  "no": 40,
   "id": "skeleton",
   "name": "空腹でスケルトン",
   "kind": "ending",
   "files": [
-   "41_skeleton_zoom.png",
-   "41_skeleton_screen.png",
-   "41_skeleton_fish.png",
-   "41_skeleton_card.png"
+   "40_skeleton_zoom.png",
+   "40_skeleton_screen.png",
+   "40_skeleton_fish.png",
+   "40_skeleton_card.png"
   ]
  },
  {
-  "no": 42,
+  "no": 41,
   "id": "overeat",
   "name": "食べすぎ",
   "kind": "ending",
   "files": [
-   "42_overeat_zoom.png",
-   "42_overeat_screen.png",
-   "42_overeat_fish.png",
-   "42_overeat_card.png"
+   "41_overeat_zoom.png",
+   "41_overeat_screen.png",
+   "41_overeat_fish.png",
+   "41_overeat_card.png"
   ]
  },
  {
-  "no": 43,
+  "no": 42,
   "id": "fishman",
   "name": "魚人なのに溺死",
   "kind": "ending",
   "files": [
-   "43_fishman_zoom.png",
-   "43_fishman_screen.png",
-   "43_fishman_fish.png",
-   "43_fishman_card.png"
+   "42_fishman_zoom.png",
+   "42_fishman_screen.png",
+   "42_fishman_fish.png",
+   "42_fishman_card.png"
   ]
  },
  {
-  "no": 44,
+  "no": 43,
   "id": "oldage",
   "name": "大往生",
   "kind": "ending",
   "files": [
-   "44_oldage_zoom.png",
-   "44_oldage_screen.png",
-   "44_oldage_fish.png",
-   "44_oldage_card.png"
+   "43_oldage_zoom.png",
+   "43_oldage_screen.png",
+   "43_oldage_fish.png",
+   "43_oldage_card.png"
   ]
  },
  {
-  "no": 45,
+  "no": 44,
   "id": "dragon",
   "name": "竜になった",
   "kind": "ending",
   "files": [
-   "45_dragon_zoom.png",
-   "45_dragon_screen.png",
-   "45_dragon_fish.png",
-   "45_dragon_card.png"
+   "44_dragon_zoom.png",
+   "44_dragon_screen.png",
+   "44_dragon_fish.png",
+   "44_dragon_card.png"
   ]
  },
  {
-  "no": 46,
+  "no": 45,
   "id": "golden",
   "name": "純金になった",
   "kind": "ending",
   "files": [
-   "46_golden_zoom.png",
-   "46_golden_screen.png",
-   "46_golden_fish.png",
-   "46_golden_card.png"
+   "45_golden_zoom.png",
+   "45_golden_screen.png",
+   "45_golden_fish.png",
+   "45_golden_card.png"
   ]
  },
  {
-  "no": 47,
+  "no": 46,
   "id": "hermit",
   "name": "人間不信",
   "kind": "ending",
   "files": [
-   "47_hermit_zoom.png",
-   "47_hermit_screen.png",
-   "47_hermit_fish.png",
-   "47_hermit_card.png"
+   "46_hermit_zoom.png",
+   "46_hermit_screen.png",
+   "46_hermit_fish.png",
+   "46_hermit_card.png"
   ]
  },
  {
-  "no": 48,
+  "no": 47,
   "id": "giant",
   "name": "巨大化",
   "kind": "ending",
   "files": [
-   "48_giant_zoom.png",
-   "48_giant_screen.png",
-   "48_giant_fish.png",
-   "48_giant_card.png"
+   "47_giant_zoom.png",
+   "47_giant_screen.png",
+   "47_giant_fish.png",
+   "47_giant_card.png"
   ]
  },
  {
-  "no": 49,
+  "no": 48,
   "id": "babies",
   "name": "子だくさん",
   "kind": "ending",
   "files": [
-   "49_babies_zoom.png",
-   "49_babies_screen.png",
-   "49_babies_fish.png",
-   "49_babies_card.png"
+   "48_babies_zoom.png",
+   "48_babies_screen.png",
+   "48_babies_fish.png",
+   "48_babies_card.png"
   ]
  }
 ]
