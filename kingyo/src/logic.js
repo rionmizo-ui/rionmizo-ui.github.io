@@ -71,7 +71,6 @@ var GoldfishLogic = (function () {
     ['split',        '分裂失敗',         'ending', 'float'],
     ['skeleton',     '空腹でスケルトン', 'ending', 'float'],
     ['overeat',      '食べすぎ',         'ending', 'sink'],
-    ['cramped',      '水槽がせまい',     'ending', 'float'],
     ['fishman',      '魚人なのに溺死',   'ending', 'float'],
     ['oldage',       '大往生',           'ending', 'float'],
     // 追加の結末
@@ -93,21 +92,20 @@ var GoldfishLogic = (function () {
   //  ・v20：のんびり成長で1匹あたりの世話の回数が減ったので、回数の条件を1〜2回ずつ下げた
   //  ・v18 で「まんまる」（食べすぎと似ている）と「ストレスでハゲた」（緊張で石化と似ている）を削除。
   const ENDING_RULES = [
-    { id: 'bug',      w: 0.0311, test: () => true },
-    { id: 'duck',     w: 22.4, test: s => s.polishes >= 3 && s.touches <= 1 },   // v21: ふれあい3→1回以下                                     // よく磨いて、あまりかまわない
-    { id: 'dragon',   w: 5.89, test: s => s.feeds >= 3 && s.touches >= 2 && s.polishes >= 1 && s.stress <= 25 && s.dirt === 0 },   // バランスよく
-    { id: 'babies',   w: 2.19, test: s => (s.combos >= 1 || s.polishes >= 1) && s.feeds >= 2 && s.touches >= 2 },   // 3つの世話をどれもした                       // 3つの世話を一巡
-    { id: 'golden',   w: 4.29, test: s => s.goldEaten >= 1 && s.starveTime === 0 },                                 // 金の粒を食べ、空腹にさせない
-    { id: 'moss',     w: 4.29, test: s => s.dirt >= 2 || (s.dirt >= 1 && s.polishes <= 1) },                         // 汚れたまま
-    { id: 'stone',    w: 133, test: s => (s.stress >= 28 || s.maxStress >= 45) && !(s.polishes >= 3 && s.touches <= 1) },   // v21: アヒルの育て方（磨くだけ）とは重ならない                                    // ストレスをためた
-    { id: 'split',    w: 9.63, test: s => s.touches === 0 && s.feeds <= 3 },   // v20: 一度もふれあわず、ごはんも少なめ
-    { id: 'hermit',   w: 31.2, test: s => s.netCount >= 1 },   // v20: 網を1回でも（重みで出やすさを調整）                                                        // 網を何度も入れた
-    { id: 'skeleton', w: 0.804, test: s => s.swimTime > 0 && s.starveTime >= s.swimTime * 0.08 },                    // 腹ぺこの時間が長い
-    { id: 'giant',     w: 0.31, test: s => s.touches >= 3 && s.stress <= 15 && s.wantsMet >= 2 },                    // ほどよくふれあい、気分に応えた
-    { id: 'overeat',  w: 1.25, test: s => s.feeds >= 4 && s.satiety >= 10 },                                       // たくさん食べて、満タン時もお腹いっぱい
-    { id: 'cramped',  w: 8.47, test: s => s.feeds >= 5 },                                                          // とにかくたくさん食べさせた
-    { id: 'fishman',  w: 2.23, test: s => s.touches >= 6 },                                                        // ふれあいすぎ
-    { id: 'oldage',   w: 0.0309, test: () => true },                                                                 // 受け皿
+    { id: 'bug',      w: 0.005, test: () => true },
+    { id: 'duck',     w: 91.6, test: s => s.polishes >= 3 && s.touches <= 1 },   // v21: ふれあい3→1回以下                                     // よく磨いて、あまりかまわない
+    { id: 'dragon',   w: 8.7, test: s => s.feeds >= 3 && s.touches >= 2 && s.polishes >= 1 && s.stress <= 25 && s.dirt === 0 },   // バランスよく
+    { id: 'babies',   w: 2.98, test: s => (s.combos >= 1 || s.polishes >= 1) && s.feeds >= 2 && s.touches >= 2 },   // 3つの世話をどれもした                       // 3つの世話を一巡
+    { id: 'golden',   w: 6.36, test: s => s.goldEaten >= 1 && s.starveTime === 0 },                                 // 金の粒を食べ、空腹にさせない
+    { id: 'moss',     w: 7.92, test: s => s.dirt >= 2 || (s.dirt >= 1 && s.polishes <= 1) },                         // 汚れたまま
+    { id: 'stone',    w: 1920, test: s => (s.stress >= 28 || s.maxStress >= 45) && !(s.polishes >= 3 && s.touches <= 1) },   // v21: アヒルの育て方（磨くだけ）とは重ならない                                    // ストレスをためた
+    { id: 'split',    w: 28.6, test: s => s.touches === 0 && s.feeds <= 3 },   // v20: 一度もふれあわず、ごはんも少なめ
+    { id: 'hermit',   w: 75.8, test: s => s.netCount >= 1 },   // v20: 網を1回でも（重みで出やすさを調整）                                                        // 網を何度も入れた
+    { id: 'skeleton', w: 1.14, test: s => s.swimTime > 0 && s.starveTime >= s.swimTime * 0.08 },                    // 腹ぺこの時間が長い
+    { id: 'giant',     w: 0.138, test: s => (s.touches >= 3 && s.stress <= 15 && s.wantsMet >= 2) || s.feeds >= 5 },   // ほどよくふれあい気分に応えた／v23 P5c：とにかくたくさん食べさせた（旧「水槽がせまい」）
+    { id: 'overeat',  w: 0.565, test: s => s.feeds >= 4 && s.satiety >= 10 },                                       // たくさん食べて、満タン時もお腹いっぱい
+    { id: 'fishman',  w: 3.35, test: s => s.touches >= 6 },                                                        // ふれあいすぎ
+    { id: 'oldage',   w: 0.005, test: () => true },                                                                 // 受け皿
   ];
 
   const VISIT_ACC = { crab: 'haircut', turtle: 'squashed', loach: 'loach', catfish: 'catfish' };   // v22
@@ -116,8 +114,8 @@ var GoldfishLogic = (function () {
   // v18: 突然死29種がなるべく同じくらいずつ出るように見直し（シミュレーションと自動プレイで確認）
   //  登場即死 8→2%、餌の事故 各1→0.4%、掃除 吸い込み3→6%・磨きすぎ2→1.2%、網 5→6%、しぐさ 8→20%
   //  ふれあいの事故は反応ごと（TOUCH_P）。撫でる(猫)は反応が出やすいぶん低め、ジャンプ・膨らむは高め
-  const P = { instant: 0.02, feedEach: 0.004, cleanEach: 0.06, overpolish: 0.012, touch: 0.12, net: 0.06, gesture: 0.08, visit: 0.12 };   // v22: お客さん 15→12%（なかよしの出番をふやす）   // v20: しぐさ 20→8%・お客さん 30→15%（出会う回数がふえたぶん下げた。idle_sim2.js と自動プレイで調整）
-  const TOUCH_P = { cat: 0.07, bird: 0.13, dizzy: 0.1, bubblegone: 0.12, floataway: 0.14, knotted: 0.09, nowake: 0.12, star: 0.09, cleanfreak: 0.10, daruma: 0.10, rocketBird: 0.10 };
+  const P = { instant: 0.02, feedEach: 0.004, cleanEach: 0.12, overpolish: 0.012, touch: 0.12, net: 0.06, gesture: 0.18, visit: 0.22 };   // v23 P6：ひと休み中は事故が起きないぶん、しぐさ 8→18%・お客さん 12→22%。掃除の吸い込み 6→12%（一度も出ていなかった）   // v22: お客さん 15→12%（なかよしの出番をふやす）   // v20: しぐさ 20→8%・お客さん 30→15%（出会う回数がふえたぶん下げた。idle_sim2.js と自動プレイで調整）
+  const TOUCH_P = { cat: 0.053, bird: 0.098, dizzy: 0.075, bubblegone: 0.09, floataway: 0.105, knotted: 0.068, nowake: 0.09, star: 0.068, cleanfreak: 0.075, daruma: 0.075, rocketBird: 0.075 };   // v23 P6：芸を20→15種に減らしたぶん（死ぬ芸に当たる回数が約1.33倍）、全部を0.75倍に
   const P_SPEC = { instant: 0.05, feedEach: 0.005, cleanEach: 0.0125, touch: 0.025, net: 0.025, gesture: 0.03 };
   const GROW_SEC = 6;     // v20: のんびり成長。放置で泳いでいると6秒ごとにゲージ+1（idle_sim2.js の最適値）
   const HUNGER_SEC = 5;    // 通常遊泳で腹持ちが1粒分減る秒数（企画書10秒。お腹を空きやすく）
@@ -475,7 +473,7 @@ var GoldfishLogic = (function () {
           const raw = storage.getItem(STORAGE_KEY);
           if (!raw) return false;
           const d = JSON.parse(raw);
-          const currentCause = id => id === 'shellhome' ? 'squashed'
+          const currentCause = id => id === 'shellhome' ? 'squashed' : id === 'cramped' ? 'giant'
             : Object.prototype.hasOwnProperty.call(CAUSE_BY_ID, id) ? id : null;
           s.zukan = new Set((d.zukan || []).map(currentCause).filter(Boolean));
           s.lastEnding = currentCause(d.lastEnding);

@@ -1,4 +1,15 @@
-# きんぎょのさいご 引き継ぎメモ（v22）
+# きんぎょのさいご 引き継ぎメモ（v23）
+
+## v23 での大きな変更（v22 からの差分。下の v22 の説明より優先）
+- 死因 **49種**（突然死35・結末14）。「水槽がせまい」は「巨大化」にまとめた
+- 結末の変身・おばけ・ミドリガメ・ナマズ・猫は **assets/*.png のユーザーの絵**（コマ表）。`tools/sheetcut.py` で元の絵から作り直せる（目標幅＝1コマ目の金魚を49ドットに）。`ASSET_INFO`（sprites.js）にコマ数・基準点・`end`（ふだんは最後のコマ）
+- 変身の再生は main.js の `SEQ_END` と `playSeq`
+- ふれあいの芸15種・しぐさ16種。ミニゲーム3種はお誘い8秒・20〜35秒後から
+- 確率：`P`（しぐさ18％・お客さん22％・吸い込み12％）、`TOUCH_P` は v22 の0.75倍
+- 確かめ方に追加：`tools/filmall.js`（死に際の通し撮り）、`tools/cardpeek.js`、`tools/cardlist.js`（CARDS.html）、`tools/deathlist.js`（DEATHS.md）。`bot.js` の結果に `stats`（芸・しぐさ・お客さん・イベント・ミニゲームの回数）
+- 公開ページ：遊べる https://claude.ai/artifact/WWnRiryJYMEkMP6R1sUob1 ／ 見本 https://claude.ai/artifact/Srbg7TqMBwWp4nFdornG2U ／ デザイン帳 https://claude.ai/artifact/Emi5wjEMyzXi62Qsq8nebD ／ カード帳（CARDS.html）
+- 目標：ESP32 に載せても重くならないこと。game.html は 400KB 以内（v23 で 398KB）
+
 
 ## 毎回の約束（チャットを移っても続ける）
 作業のたびに、次の4つを必ず渡す。

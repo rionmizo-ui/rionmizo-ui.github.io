@@ -339,7 +339,7 @@ var GoldfishGame = (function () {
   function resetScene() {
     pellets = []; poops = []; bubbles = []; fx = []; thought = null; queued = null; busy = false; feeding = false;
     netReady = false; netQueued = false; wipes = null; sparkle = false;
-    finger = brush = nozzle = net = paw = duck = feather = eyeball = bigBubble = null; fish.rollF = null; fish.die = null; fish.asset = null;
+    finger = brush = nozzle = net = paw = duck = feather = eyeball = bigBubble = null; fish.rollF = null; fish.die = null; fish.asset = null; fish.assetFrame = null; fish.assetScale = 1;
     babies = []; ufo = chef = meteor = crater = ghost = null; ghostPellets = [];
     xo = {};
     ev = null; catObj = mpel = glow = null; dark = 0; shakeAmp = 0; evAt = T + rnd(35, 60); restUntil = 0;
@@ -1545,7 +1545,8 @@ var GoldfishGame = (function () {
       const gx = ghost.x, gy = ghost.y;
       yield* tween(0.4, p => { ghost.x = gx + (fish.x - gx) * p; ghost.y = gy + (fish.y - gy) * p; });
       ghost = null; fx.push({ k: 'flash', t: T, d: 0.15 }); sfx('zap');
-      yield* dieTo('possessed');
+      fish.dir = fish.face = -1; fish.turnP = 0; fish.ex = {}; fish.opts = {};
+      yield* playSeq('possessed_ghost', { d: 2.8 });
       fish.opts = { variant: 'possessed', ghost: true }; fish.eyes = 'closed'; fish.ex = {};
       yield 0.8;
       const fy = fish.y, fx1 = fish.x;
@@ -1812,9 +1813,9 @@ var GoldfishGame = (function () {
         const from = Math.random() < 0.5 ? -1 : 1;
         visitor = kind === 'snail' ? { kind, x: rnd(30, 130), y: WATER + 4, vx: rnd(-3, 3), vy: 7, t0: T }
           : kind === 'crab' ? { kind, x: from < 0 ? -12 : W + 12, y: SAND_Y - 5, vx: -from * 16, vy: 0, t0: T }
-          : kind === 'turtle' ? { kind, x: from < 0 ? -12 : W + 12, y: 100, vx: -from * 12, t0: T }
+          : kind === 'turtle' ? { kind, x: from < 0 ? -30 : W + 30, y: 66, vx: -from * 12, t0: T }
           : kind === 'loach' ? { kind, x: from < 0 ? -18 : W + 18, y: SAND_Y - 5, vx: -from * 22, vy: 0, t0: T, dig: 0 }        // v20 ドジョウ
-          : kind === 'catfish' ? { kind, x: from < 0 ? -20 : W + 20, y: FLOOR - 10, vx: -from * 11, vy: 0, t0: T, open: 0 }     // v20 ナマズ
+          : kind === 'catfish' ? { kind, x: from < 0 ? -40 : W + 40, y: FLOOR - 16, vx: -from * 11, vy: 0, t0: T, open: 0 }     // v20 ナマズ
           : { kind, x: from < 0 ? -12 : W + 12, y: rnd(70, 170), vx: -from * 26, vy: 0, t0: T, hop: 0 };
         sfx(kind === 'crab' ? 'hic' : 'bubble');
         if (!busy) { gestAt = Math.max(gestAt, T + 8); fish.cruise = false; fish.wps = []; gest = { it: gVisitor(visitor), wait: 0, cond: null }; }
@@ -1830,12 +1831,12 @@ var GoldfishGame = (function () {
       if (Math.random() < dt * 0.4) v.pauseUntil = T + rnd(0.4, 1.0);
       if (v.x < -20 || v.x > W + 20) { visitor = null; visitAt = T + rnd(35, 60); }
     } else if (v.kind === 'turtle') {
-      if (!v.falling) v.y = 100 + Math.sin((T - v.t0) * 2) * 8;
+      if (!v.falling) v.y = 66 + Math.sin((T - v.t0) * 2) * 8;   // v23 P5c：画面の上のほうを泳ぐ
       if (!(v.pauseUntil > T)) v.x += v.vx * dt * (Math.sin(T * 5) > -0.3 ? 1 : 0.2);
       else v.neck = Math.min(1, (v.neck || 0) + dt * 2);
       if (!(v.pauseUntil > T)) v.neck = Math.max(0, (v.neck || 0) - dt * 2);
       if (!v.ride && Math.random() < dt * 0.25) v.pauseUntil = T + rnd(1, 2);
-      if (v.x < -28 || v.x > W + 28) { visitor = null; visitAt = T + rnd(35, 60); }
+      if (v.x < -36 || v.x > W + 36) { visitor = null; visitAt = T + rnd(35, 60); }
     } else if (v.kind === 'loach') {    // v20 ドジョウ：くねくね進んで、ときどき砂にもぐって ばっと出る
       if (v.digUntil > T) { v.dig = Math.min(1, v.dig + dt * 3); }
       else { v.dig = Math.max(0, v.dig - dt * 4); if (v.dig < 0.05 && !(v.pauseUntil > T)) v.x += v.vx * dt * (0.6 + 0.4 * Math.sin(T * 9)); }
@@ -1843,10 +1844,10 @@ var GoldfishGame = (function () {
       if (!(v.digUntil > T) && Math.random() < dt * 0.25) { v.digUntil = T + rnd(1.2, 2.2); sandPuff(v.x, SAND_Y, 5); }
       if (v.x < -24 || v.x > W + 24) { visitor = null; visitAt = T + rnd(35, 60); }
     } else if (v.kind === 'catfish') {  // v20 ナマズ：底のほうを ゆったり。ときどき大あくび
-      if (!(v.pauseUntil > T)) { v.x += v.vx * dt; v.y = FLOOR - 10 + Math.sin(T * 1.2) * 2; }
+      if (!(v.pauseUntil > T)) { v.x += v.vx * dt; v.y = FLOOR - 16 + Math.sin(T * 1.2) * 2; }
       if (!v.eat) v.open = v.yawnUntil > T ? Math.min(1, v.open + dt * 2) : Math.max(0, v.open - dt * 3);
       if (!v.eat && Math.random() < dt * 0.12) v.yawnUntil = T + 1.2;
-      if (v.x < -40 || v.x > W + 40) { visitor = null; visitAt = T + rnd(35, 60); }
+      if (v.x < -48 || v.x > W + 48) { visitor = null; visitAt = T + rnd(35, 60); }
     } else {
       v.hop += dt; const ph = (v.hop % 0.9) / 0.9;
       v.x += v.vx * dt * (ph < 0.35 ? 2.2 : 0.3); v.y += Math.sin(T * 2) * 4 * dt;
@@ -1889,7 +1890,7 @@ var GoldfishGame = (function () {
       v.pauseUntil = T + 1.6; v.neck = 0; fish.dir = -Math.sign(v.vx) || 1; sfx('pet'); yield 1.0;
       { const acc = g.visitorAccident('turtle'); if (acc) return gestDeath(acc, v); }
       v.happy = true; v.ride = true; fish.ex = { eyes: 'happy', mouth: 'grin', blush: true, mark: 'note' };
-      for (let k = 0; k < 16 && visitor === v; k++) { fish.tx = clamp(v.x - Math.sign(v.vx) * 2, 24, 136); fish.ty = clamp(v.y - 20, 36, FLOOR - 4); fish.dir = v.vx > 0 ? 1 : -1; yield 0.25; }
+      for (let k = 0; k < 16 && visitor === v; k++) { fish.tx = clamp(v.x - Math.sign(v.vx) * 2, 24, 136); fish.ty = clamp(v.y - 24, 30, FLOOR - 4); fish.dir = v.vx > 0 ? 1 : -1; yield 0.25; }
       v.ride = false; fish.ex = { eyes: 'sparkle', mouth: 'smile' }; friend(v); yield go(fish.x, fish.y - 30, 40); yield 0.4; return;
     }
     if (v.kind === 'loach') {    // v20 ドジョウ：のぞきこむ → 砂にもぐる → ばっと出てきて、びっくり
@@ -2016,7 +2017,7 @@ var GoldfishGame = (function () {
       v.pauseUntil = T + 99; v.eat = true;
       const d = Math.sign(v.vx) || 1; v.vx = d * 0.01;
       fish.dir = fish.face = -d; fish.turnP = 0;
-      const mx = () => v.x + d * 26, my = () => v.y;
+      const mx = () => v.x + d * 32, my = () => v.y - 2;
       yield* tween(0.8, p => { v.open = ease(p); });
       sfx('suck');
       const x0 = fish.x, y0 = fish.y;
@@ -2329,18 +2330,6 @@ var GoldfishGame = (function () {
     else { if (!already) { yield* dieTo(id); sfx('death'); } fish.eyes = 'x'; fish.opts = Object.assign({ variant: id }, DEATH_LOOK[id] || { flip: true }); }
     return yield* deathSettle(id);
   }
-  function* gasp() {           // 「！？」の間
-    fish.eyes = 'surprised'; fish.ex = { eyes: 'surprised', mouth: 'o', mark: '!' }; fish.sq = 1.1; fish.surpT = T;
-    yield* tween(0.35, p => { fish.oy = -Math.round(Math.sin(p * Math.PI) * 4); });
-    fish.oy = 0; fish.ex = {};
-  }
-  function* bellyUp(look, dur) {   // ゆっくり裏返る
-    // 裏返りは6コマの手描きポーズで
-    fish.rot = 0;
-    const d = (dur || 0.7) / 6;
-    for (let f = 0; f <= 5; f++) { fish.rollF = f; fish.oy = f === 2 || f === 3 ? -2 : 0; yield d; }
-    fish.rollF = null; fish.oy = 0; fish.opts = Object.assign({ flip: true }, look || {});
-  }
   // 死に方の演出：手描きコマ（dieTo）に、音と小さな効果を重ねる
   const DEATH_ANIM = {
     *instant() {             // ぽちゃん→きょとん→裏返る→ぷくっと泡
@@ -2440,7 +2429,7 @@ var GoldfishGame = (function () {
       if (causeId === 'squashed' && visitor && visitor.look) { yield 0.4; showCard(causeId); return; }   // v23 P5：カメが乗ったまま札へ
       if (target && target.y < WATER + 4) target.y = WATER + 6;   // 浮いているものも水面ですくう
       const buried = causeId === 'loach';
-      yield* scoop(target, { x: buried ? fish.x : 80, y: buried ? FLOOR : 130, big: causeId === 'cramped' || fish.opts.scale >= 2 });
+      yield* scoop(target, { x: buried ? fish.x : 80, y: buried ? FLOOR : 130, big: causeId === 'giant' || fish.opts.scale >= 2 });
       fish.vis = false; eyeball = feather = duck = null; net = null;
       yield 0.3;
       showCard(causeId);
@@ -2465,11 +2454,10 @@ var GoldfishGame = (function () {
   // 変身後の完成形（交互表示でもこの姿を見せる）
   const END_LOOK = {
     bug: {}, duck: {}, moss: { moss: true }, stone: { stone: true }, split: {}, skeleton: { skeleton: true },
-    overeat: { belly: true }, cramped: { scale: 3.3 }, fishman: { legs: true }, oldage: { wrinkles: true },
+    overeat: { belly: true }, fishman: { legs: true }, oldage: { wrinkles: true },
     babies: { mom: true },
     dragon: { dragon: true }, golden: { palette: 'gold', shine: true }, hermit: {},
   };
-  const SPLIT_AT = 0.8;   // 二つ目の頭がここまで育って止まる
   function startEnding() {
     mode = 'ending'; busy = true; queued = null; thought = null;
     const id = g.decideEnding();
@@ -2489,7 +2477,10 @@ var GoldfishGame = (function () {
       yield 0.6;
       // 変身前 ⇄ 変身後をだんだん速く交互に見せ、変身後で止める
       const look = END_LOOK[id] || {};
-      if (id !== 'duck' && id !== 'giant') {
+      if (SEQ_END[id]) {   // v23 P5c：ユーザーの絵のコマ表で変身
+        fish.dir = fish.face = -1; fish.turnP = 0; fish.opts = {}; fish.eyes = 'normal';
+        yield* playSeq(id, SEQ_END[id]);
+      } else if (id !== 'duck') {
         const beats = [0.55, 0.5, 0.42, 0.36, 0.3, 0.24, 0.19, 0.15];
         for (let k = 0; k < beats.length; k++) {
           const after = k % 2 === 1;
@@ -2515,11 +2506,30 @@ var GoldfishGame = (function () {
     });
   }
   // v23: ユーザーの絵で「変身後の姿」を出す結末
-  const END_ASSET = { giant: 'giant', overeat: 'overeat', fishman: 'fishman', split: 'split', dragon: 'dragon', skeleton: 'skeleton' };
+  const END_ASSET = { skeleton: 'skeleton' };
+  // v23 P5c：コマ表で変身する結末と、変身にかける秒数・大きさ・動き
+  const SEQ_END = { overeat: { d: 3.2 }, split: { d: 3.4 }, dragon: { d: 3.4 }, fishman: { d: 3.6, y: () => SAND_Y - 36 }, giant: { d: 3.6, sc: 1.8 } };
+  // コマ表を順に再生（コマが変わるたびに小さく弾む。となりのコマへ重ねてつなぐ）
+  function* playSeq(name, o) {
+    o = o || {};
+    const bx = S.assetBox && S.assetBox(name); if (!bx) return;
+    fish.asset = name; fish.assetScale = o.sc || 1; fish.assetFrame = 0;
+    const n = bx.n, y0 = fish.y, y1 = o.y ? o.y() : y0;
+    let last = 0; sfx('grow');
+    yield* tween(o.d || 3.2, p => {
+      const u = p * (n - 1), i = Math.floor(u), fr = u - i;
+      fish.assetFrame = Math.min(n - 1, i + Math.max(0, Math.min(1, (fr - 0.55) / 0.45)));
+      if (i !== last) { last = i; fish.sq = 0.7; sfx(i % 2 ? 'pet' : 'blink'); }
+      fish.y = y0 + (y1 - y0) * ease(p);
+    });
+    fish.assetFrame = null;
+    fx.push({ k: 'flash', t: T, d: 0.12 }); sfx('fanfare');
+    for (let i = 0; i < 10; i++) fx.push({ k: 'drop', x: fish.x, y: fish.y, vx: Math.cos(i * 0.63) * 40, vy: Math.sin(i * 0.63) * 40 - 20, t: T, d: 0.7 });
+    yield 0.8;
+  }
   function applyLook(id, on, look) {
     fish.opts = on ? Object.assign({ variant: id }, look) : {};
     fish.asset = on && S.hasAsset && END_ASSET[id] && S.hasAsset(END_ASSET[id]) ? END_ASSET[id] : null;
-    fish.splitHead = 0;   // v15: 分裂は静止形がすでに2つ頭
     fish.hermit = on && id === 'hermit';
     fish.glitch = on && id === 'bug';
     fish.legLen = on && id === 'fishman' ? Math.round(FLOOR + 4 - fish.y - 12) : 0;
@@ -2558,15 +2568,9 @@ var GoldfishGame = (function () {
       for (let k = 0; k < 5; k++) { fish.dir = -fish.dir; yield 0.6; }
     },
     *split() {
-      // もう一つの頭が生えかけて…止まる
-      fish.eyes = 'wide';
-      for (let k = 0; k < 3; k++) {
-        sfx('puff');
-        yield* tween(0.45, p => { fish.splitHead = SPLIT_AT + Math.sin(p * Math.PI) * 0.12; fish.ox = Math.round(Math.sin(p * 40)); });
-        yield 0.25;
-      }
-      fish.ox = 0; fish.splitHead = SPLIT_AT;
-      fish.eyes = 'dizzy'; yield 0.7;
+      // 頭がふえすぎて…もがく
+      for (let k = 0; k < 3; k++) { sfx('puff'); yield* tween(0.45, p => { fish.ox = Math.round(Math.sin(p * 40)); }); yield 0.25; }
+      fish.ox = 0; yield 0.7;
       fish.eyes = 'x'; sfx('death'); yield 0.6;
       yield* settleY(WATER + 12, 2);
     },
@@ -2579,14 +2583,10 @@ var GoldfishGame = (function () {
       fx.push({ k: 'text', s: 'げぷっ', x: mouthX(), y: fish.y - 16, t: T, d: 1.2, c: '#ffffff' }); bubbles.push({ x: mouthX(), y: fish.y, r: 5, vy: -14 }); sfx('bubble'); yield 0.6;
       fish.ox = 0; fish.eyes = 'x'; sfx('death'); yield* settleY(FLOOR - 10, 2.5);
     },
-    *cramped() {
-      sfx('grow'); fx.push({ k: 'text', s: 'ミシミシ…', x: 80, y: 40, t: T, d: 1.8, c: '#ffffff' });
-      for (let k = 0; k < 4; k++) { fish.ox = (k % 2) * 2 - 1; sfx('koton'); yield 0.35; }   // ガラスにつかえてもがく
-      fish.ox = 0; fish.eyes = 'dizzy'; yield 1; fish.eyes = 'x'; sfx('death'); yield 1;
-    },
+
     *fishman() {
       // 脚がぐんぐん伸びて底に立つ → 水の中で溺れる
-      fish.eyes = 'wide'; fish.opts = { variant: 'fishman', legs: true, drown: true };
+      fish.eyes = 'wide';
       for (let k = 0; k < 6; k++) { fish.oy = (k % 2) * -2; sfx('splash'); bubbles.push({ x: fish.x + fish.dir * 20, y: fish.y - 4, r: 2, vy: -14 }); yield 0.35; }
       fish.oy = 0; fish.eyes = 'x'; sfx('death'); yield 1.5;
     },
@@ -2630,17 +2630,9 @@ var GoldfishGame = (function () {
       yield 3.5;
     },
     *giant() {
-      fish.turnP = 0; fish.dir = fish.face = -1;
-      fish.opts = { variant: 'giant', eyes: 'wide', mouth: 'o' };
-      const fullScale = 3.8;
-      sfx('grow');
-      yield* tween(3.3, p => {
-        fish.rot = 0.88 * ease(p);
-        fish.opts.scale = 1 + (fullScale - 1) * ease(p);
-        fish.y = 115 + 3 * p; fish.x = 80;
-      });
-      fish.opts.eyes = 'closed'; fish.opts.swimF = 0; sfx('koton');
-      yield 1.5;
+      fx.push({ k: 'text', s: 'ミシミシ…', x: 80, y: 40, t: T, d: 1.8, c: '#ffffff' });
+      for (let k = 0; k < 4; k++) { fish.ox = (k % 2) * 2 - 1; sfx('koton'); yield 0.35; }   // ガラスにつかえてもがく
+      fish.ox = 0; yield 1.2;
     },
   });
 
@@ -3290,7 +3282,7 @@ var GoldfishGame = (function () {
     duck: 'くちばしが むずむず…', dragon: 'ひげが のびてきた…？', babies: 'おなかが ぽかぽか…',
     golden: 'うろこが ぴかっ…', moss: 'からだが ぬるぬる…', stone: 'からだが かたくなる…', split: 'あたまが もうひとつ…？',
     hermit: 'からに こもりたい…', skeleton: 'ほねが すけてる…？', giant: 'どんどん おおきく…',
-    overeat: 'おなかが はちきれそう', cramped: '水槽が せまい…', fishman: '足が はえそう…？',
+    overeat: 'おなかが はちきれそう', fishman: '足が はえそう…？',
     oldage: 'のんびり ながいき しそう',
   };
   function updateOmen() {
@@ -3314,7 +3306,7 @@ var GoldfishGame = (function () {
     haircut: 'カニに近づきすぎると', squashed: 'カメのしっぽを引っぱると', loach: 'ドジョウのまねをすると', catfish: 'ナマズがあくびをしたら',
     fished: '釣り針にミミズ', boiled: '暑い日には', photo: 'カメラを向けられたら', pigeon: '手品師の帽子', star: 'ロケットの芸',
     bug: 'ボタンをすごく連打', duck: 'よく磨いて、ほとんどかまわない', moss: '汚れをためたまま', stone: 'ピリピリさせたまま', split: 'ほとんどふれあわない',
-    hermit: '網を何度も入れる', skeleton: '腹ぺこのまま', giant: 'ほどよくふれあい、気分に応える', overeat: 'たくさん食べさせる', cramped: 'もっともっと食べさせる', fishman: 'とにかくふれあいすぎる',
+    hermit: '網を何度も入れる', skeleton: '腹ぺこのまま', giant: 'ほどよくふれあうか、もっともっと食べさせる', overeat: 'たくさん食べさせる', fishman: 'とにかくふれあいすぎる',
     oldage: 'ふつうに育てる', dragon: 'バランスよく育てる', golden: '金の粒を食べて、無理をさせない', babies: '3つの世話を順番にそろえる',
   };
   function fitText(t, w) { if (ctx.measureText(t).width <= w) return t; while (t.length > 1 && ctx.measureText(t + '…').width > w) t = t.slice(0, -1); return t + '…'; }
@@ -3468,8 +3460,8 @@ var GoldfishGame = (function () {
     if (fish.inNet) {
       const o2 = Object.assign({ dir: fish.face, t: T, eyes: fish.eyes, mouth: 'o', stage, color: fish.color }, fish.opts, { scale: net && net.scale > 1 ? 1.6 : 0.8, rot: fish.face * 0.3 + (net ? net.tilt || 0 : 0) + Math.sin(T * 9) * 0.06 });
       // v23 P5：ユーザーの絵になった魚は、網の中でもその絵のまま（巨大化は大きな網に大きいまま）
-      const na = fish.asset || (fish.opts.variant === 'giant' && fish.opts.scale >= 2.4 && S.hasAsset && S.hasAsset('giant') ? 'giant' : null);
-      if (na && S.drawAsset && na !== 'dragon') { S.drawAsset(ctx, na, Math.round(fish.x), Math.round(fish.y) - (na === 'giant' ? 14 : na === 'fishman' ? -14 : 4), { color: fish.color, dir: fish.face, scale: na === 'giant' ? 0.72 : 0.6, rot: o2.rot * 0.5 }); return; }
+      const na = fish.asset;
+      if (na && S.drawAsset && na !== 'dragon') { S.drawAsset(ctx, na, Math.round(fish.x), Math.round(fish.y) - (na === 'giant' ? 14 : na === 'fishman' ? -14 : 4), { color: fish.color, dir: fish.face, scale: na === 'giant' ? 1.3 : 0.6, rot: o2.rot * 0.5 }); return; }
       if (!fish.opts.dragon) S.drawFish(ctx, Math.round(fish.x), Math.round(fish.y), o2);
       return;
     }
@@ -3489,7 +3481,7 @@ var GoldfishGame = (function () {
     if (T - fish.eatT < 0.25) o.eatF = Math.min(2, Math.floor((T - fish.eatT) / 0.25 * 3));
     if (T - fish.surpT < 0.3) o.surpF = Math.min(2, Math.floor((T - fish.surpT) / 0.3 * 3));
     if (fish.rollF != null) o.rollF = fish.rollF;
-    if (!fish.opts.scale && !fish.rot && !fish.splitHead && o.eatF == null && o.surpF == null) { o.sx = Math.round(fish.sx * 20) / 20; o.sy = Math.round(fish.sy * 20) / 20; }
+    if (!fish.opts.scale && !fish.rot && o.eatF == null && o.surpF == null) { o.sx = Math.round(fish.sx * 20) / 20; o.sy = Math.round(fish.sy * 20) / 20; }
     if (!fish.opts.variant && mode !== 'dead') {
       const ex = fish.ex;
       for (const k of ['eyes', 'mouth', 'brows', 'mark', 'front', 'wag', 'cheeks', 'blush', 'sweat']) if (ex[k] != null) o[k] = ex[k];
@@ -3513,38 +3505,20 @@ var GoldfishGame = (function () {
     // v23: ユーザーの絵（最終の見た目）。色ちがいは金魚の色
     const an = fish.asset || (fish.opts.ghost && S.hasAsset && S.hasAsset('possessed_ghost') ? 'possessed_ghost' : null);
     if (an && fish.opts.variant !== 'giant') {
-      const bob = Math.round(Math.sin(T * 3) * 1);
-      if (an === 'fishman') { S.drawAsset(ctx, an, x, SAND_Y + 3, { color: fish.color, dir: o.dir, sy: o.eyes === 'x' ? 1 : 1 + (bob > 0 ? 0.04 : 0) }); return; }
+      const bob = fish.assetFrame != null ? 0 : Math.round(Math.sin(T * 3) * 1), sc = fish.assetScale || 1;
+      const base = { color: fish.color, dir: o.dir, scale: sc, alpha: fish.opts.ghost ? 0.9 : 1 };
+      if (an === 'fishman' && fish.assetFrame == null) { S.drawAsset(ctx, an, x, SAND_Y + 3, Object.assign(base, { ay: 1, sy: o.eyes === 'x' ? 1 : 1 + (bob > 0 ? 0.04 : 0) })); return; }
       let ay = y + (o.eyes === 'x' ? 0 : bob);
-      if (an === 'overeat') ay = Math.min(ay, SAND_Y - 17);
-      S.drawAsset(ctx, an, x, ay, { color: fish.color, dir: o.dir, rot: fish.opts.flip ? Math.PI : 0, alpha: fish.opts.ghost ? 0.9 : 1 });
-      return;
-    }
-    if (fish.splitHead > 0) {
-      // 体のうしろから、逆向きの頭がもう一つ生えてくる
-      S.drawFish(ctx, x, y, o);
-      const sc = Math.round((0.35 + 0.65 * fish.splitHead) * 20) / 20;
-      ctx.save(); ctx.beginPath();
-      if (o.dir > 0) ctx.rect(0, 0, x + 1, H); else ctx.rect(x, 0, W - x, H);
-      ctx.clip();
-      S.drawFish(ctx, x, y, Object.assign({}, o, { dir: -o.dir, scale: sc, turn: 0, sx: 1, sy: 1 }));
-      ctx.restore();
-      return;
-    }
-    if (fish.opts.variant === 'giant' && o.scale >= 2.4 && S.hasAsset && S.hasAsset('giant')) {
-      // 大きくなりきったら、ユーザーの絵（光る巨大金魚）に。水槽いっぱいに
-      const k = 1.15 + (o.scale - 2.4) / (3.8 - 2.4) * 0.6;
-      S.drawAsset(ctx, 'giant', x, y - 6, { color: fish.color, dir: -1, scale: Math.round(k * 8) / 8 });
-      return;
-    }
-    if (fish.opts.variant === 'giant') {
-      ctx.save();
-      ctx.translate(x, y);
-      // 拡大済みの Grid を成長のコマごとに作らず、通常サイズを描画時に拡大する。
-      ctx.scale(o.scale, o.scale * 1.18);
-      o.scale = 1;
-      S.drawFish(ctx, 0, 0, o);
-      ctx.restore();
+      const bx = S.assetBox && S.assetBox(an);
+      if (bx) ay = Math.min(ay, SAND_Y + 3 - Math.round((bx.h * (1 - bx.ay)) * sc));   // 砂にめりこまない
+      if (fish.opts.flip) base.rot = Math.PI;
+      if (fish.assetFrame != null) {   // v23 P5c：変身のコマ。となりのコマへ少し重ねてなめらかに
+        const f0 = Math.floor(fish.assetFrame), a = fish.assetFrame - f0;
+        S.drawAsset(ctx, an, x, ay, Object.assign({}, base, { frame: f0 }));
+        if (a > 0.01) S.drawAsset(ctx, an, x, ay, Object.assign({}, base, { frame: f0 + 1, alpha: a * base.alpha }));
+        return;
+      }
+      S.drawAsset(ctx, an, x, ay, base);
       return;
     }
     S.drawFish(ctx, x, y, o);
@@ -3804,11 +3778,11 @@ var GoldfishGame = (function () {
   }
 
   if (cfg.main) { window.addEventListener('resize', fit); fit(); }
-  // v23 P5：ボタンの絵文字を、金魚＋道具のドット絵に
+  // v23 P5c：ボタンの絵文字を、道具だけのドット絵に
   if (cfg.main && S.drawButtonIcon) document.querySelectorAll('.btn[data-btn]').forEach(b => {
     const ic = b.querySelector('.ic'); if (!ic) return;
     const c = document.createElement('canvas'); c.width = 32; c.height = 28; c.className = 'pic';
-    const x = c.getContext('2d'); x.imageSmoothingEnabled = false; S.drawButtonIcon(x, b.dataset.btn, 'orange');
+    const x = c.getContext('2d'); x.imageSmoothingEnabled = false; S.drawButtonIcon(x, b.dataset.btn);
     ic.replaceWith(c);
   });
   if (cfg.manual) alive = false;   // 書き出し用：外から step() でコマを進める

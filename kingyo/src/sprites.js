@@ -329,13 +329,24 @@
   // ================= v23：ユーザーが描いた「最終の見た目」の画像（assets/*.png を build2.js が埋め込む） =================
   // face：画像の顔の向き（1=右 / -1=左）。ax,ay：(x,y) に合わせる点（0..1）。recolor：金魚の色ちがいを作るか
   var ASSET_INFO = {
-    giant: { face: -1, ax: 0.5, ay: 0.5, recolor: 1 }, overeat: { face: -1, ax: 0.5, ay: 0.5, recolor: 1 },
-    fishman: { face: -1, ax: 0.42, ay: 1, recolor: 1 }, split: { face: -1, ax: 0.5, ay: 0.5, recolor: 1 },
-    dragon: { face: 1, ax: 0.5, ay: 0.5, recolor: 1 }, skeleton: { face: -1, ax: 0.5, ay: 0.5 },
-    possessed_ghost: { face: -1, ax: 0.5, ay: 0.5 }, loach_fish: { face: -1, ax: 0.5, ay: 0.5 },
-    catfish: { face: -1, ax: 0.5, ay: 0.5 }, turtle: { face: -1, ax: 0.66, ay: 0.78 },
+    // v23 P5c：変身のコマ表（8コマ。1コマ目＝ふつうの金魚、ax/ay＝1コマ目の体の中心）。end：ふだんは最後のコマを描く
+    giant: { face: -1, ax: 0.593, ay: 0.578, recolor: 1, frames: 8, end: 1 },
+    overeat: { face: -1, ax: 0.577, ay: 0.506, recolor: 1, frames: 8, end: 1 },
+    fishman: { face: -1, ax: 0.581, ay: 0.533, recolor: 1, frames: 8, end: 1 },
+    split: { face: -1, ax: 0.556, ay: 0.475, recolor: 1, frames: 8, end: 1 },
+    dragon: { face: -1, ax: 0.555, ay: 0.541, recolor: 1, frames: 8, end: 1 },
+    possessed_ghost: { face: -1, ax: 0.552, ay: 0.565, recolor: 1, frames: 8, end: 1 },
+    skeleton: { face: -1, ax: 0.5, ay: 0.5 }, loach_fish: { face: -1, ax: 0.5, ay: 0.5 },
+    catfish: { face: -1, ax: 0.514, ay: 0.622, frames: 8 }, turtle: { face: -1, ax: 0.539, ay: 0.524, frames: 4 },
+    catpaw: { face: 1, ax: 0.5, ay: 0.8 }, cat: { face: 1, ax: 0.5, ay: 1 },
     tanishi_sheet: { face: 1, ax: 0.5, ay: 1, frames: 8 }
   };
+  // 絵の大きさ（1コマ）と基準点
+  function assetBox(name) {
+    var c = assetCanvas(name); if (!c) return null;
+    var inf = ASSET_INFO[name] || {}, n = inf.frames || 1;
+    return { w: c.width / n, h: c.height, ax: inf.ax == null ? 0.5 : inf.ax, ay: inf.ay == null ? 0.5 : inf.ay, n: n };
+  }
   var ASSETS = Object.create(null);
   var ASSET_SRC = (typeof GF_ASSETS !== 'undefined' && GF_ASSETS) || (typeof window !== 'undefined' && window.GF_ASSETS) || {};
   function hexRgb(h) { h = h.replace('#', ''); return [parseInt(h.substr(0, 2), 16), parseInt(h.substr(2, 2), 16), parseInt(h.substr(4, 2), 16)]; }
@@ -391,7 +402,8 @@
   function drawAsset(ctx, name, x, y, o) {
     o = o || {}; var c = assetCanvas(name, o.color); if (!c) return false;
     var inf = ASSET_INFO[name] || {}, n = inf.frames || 1, fw = c.width / n, fh = c.height;
-    var fr = n > 1 ? ((o.frame | 0) % n + n) % n : 0;
+    var fr = n > 1 ? (o.frame == null && inf.end ? n - 1 : Math.min(n - 1, Math.max(0, o.frame | 0))) : 0;
+    if (n > 1 && !inf.end && o.frame != null) fr = ((o.frame | 0) % n + n) % n;
     var sc = o.scale || 1, flip = (o.dir || inf.face || 1) !== (inf.face || 1);
     ctx.save();
     ctx.imageSmoothingEnabled = false;
@@ -399,7 +411,7 @@
     ctx.translate(R(x), R(y));
     if (o.rot) ctx.rotate(o.rot);
     ctx.scale((flip ? -1 : 1) * sc * (o.sx || 1), sc * (o.sy || 1));
-    var ax = inf.ax == null ? 0.5 : inf.ax, ay = inf.ay == null ? 0.5 : inf.ay;
+    var ax = o.ax != null ? o.ax : inf.ax == null ? 0.5 : inf.ax, ay = o.ay != null ? o.ay : inf.ay == null ? 0.5 : inf.ay;
     ctx.translate(-R(fw * ax), -R(fh * ay));   // 左右反転は上の scale(-1) で (x,y) を軸にかかる
     ctx.drawImage(c, fr * fw, 0, fw, fh, 0, 0, fw, fh);
     ctx.restore();
@@ -2328,60 +2340,6 @@
     }
   }
   // 金魚の大きな顔（R=半径）。ガラスに押しつけた鼻・口
-  function faceAt(ctx, cx, cy, Rr, t) { // v15 の正面顔をガラスに押しつけた大写し
-    cx = R(cx); cy = R(cy);
-    var k = function (v) { return R(v * Rr); }, th = Math.max(1, R(Rr * 0.045));
-    var fin = Math.sin((+t || 0) * 4) * 0.06;
-    // 足びれ・背びれ
-    [-1, 1].forEach(function (s) {
-      ellipse(ctx, cx + k(s * 0.42), cy + k(1.0 + fin * s), Rr * 0.13 + th, Rr * 0.2 + th, FK); ellipse(ctx, cx + k(s * 0.42), cy + k(1.0 + fin * s), Rr * 0.13, Rr * 0.2, '#ff9512');
-    });
-    ellipse(ctx, cx, cy - k(0.98), Rr * 0.14 + th, Rr * 0.2 + th, FK); ellipse(ctx, cx, cy - k(0.98), Rr * 0.14, Rr * 0.2, '#ff9512');
-    ellipse(ctx, cx, cy, Rr + th * 2, Rr * 0.97 + th * 2, FK);
-    ellipse(ctx, cx, cy, Rr, Rr * 0.97, '#ff8a00');
-    // お腹（下 1/3 のクリーム）
-    ctx.save(); ctx.beginPath(); ctx.rect(cx - Rr - 4, cy + k(0.5), Rr * 2 + 8, Rr); ctx.clip && ctx.clip();
-    ellipse(ctx, cx, cy, Rr, Rr * 0.97, '#ffc890');
-    ctx.restore();
-    [-1, 1].forEach(function (s) {
-      var ex = cx + k(s * 0.5), ey = cy - k(0.3);
-      ellipse(ctx, ex, ey, Rr * 0.3 + th, Rr * 0.3 + th, FK);
-      ellipse(ctx, ex, ey, Rr * 0.3, Rr * 0.3, '#ffffff');
-      ellipse(ctx, ex - k(s * 0.04), ey + k(0.03), Rr * 0.1, Rr * 0.1, PUPIL);
-    });
-    // つぶれたくちびる（ガラスに押しつけ）
-    ellipse(ctx, cx, cy + k(0.36), Rr * 0.36 + th, Rr * 0.22 + th, FK);
-    ellipse(ctx, cx, cy + k(0.36), Rr * 0.36, Rr * 0.22, LIP);
-    ellipse(ctx, cx - k(0.14), cy + k(0.26), Rr * 0.08, Rr * 0.04, LIP_L);
-    ellipse(ctx, cx, cy + k(0.37), Rr * 0.17 + th, Rr * 0.05 + th, FK);
-    ellipse(ctx, cx, cy + k(0.37), Rr * 0.17, Rr * 0.05, SLIT);
-    ellipse(ctx, cx, cy + k(0.3), Rr * 0.22, Rr * 0.05, 'rgba(255,255,255,0.35)');
-  }
-  function drawBigFace(ctx, p, t) {
-    p = Math.max(0, Math.min(1, +p || 0)); t = +t || 0;
-    var Rr = 18 + 142 * p * p + 20 * p;
-    var cy = 118 + R(Math.sin(t * 2) * Rr * 0.01) + R(p * 20);
-    faceAt(ctx, 80, cy, Rr, t);
-    // 息のくもり
-    var br = 0.5 + 0.5 * Math.sin(t * 2.5);
-    ellipse(ctx, 80, R(cy + Rr * 0.3), Rr * (0.3 + 0.08 * br), Rr * (0.14 + 0.04 * br), 'rgba(255,255,255,' + (0.12 + 0.1 * br).toFixed(2) + ')');
-    if (p > 0.4) { // ガラスの映り込み
-      ctx.fillStyle = 'rgba(255,255,255,' + (0.1 + 0.15 * p).toFixed(2) + ')';
-      for (var i = 0; i < 40; i++) { ctx.fillRect(18 + i, 70 - i, 4, 1); ctx.fillRect(34 + i, 70 - i, 2, 1); ctx.fillRect(110 + i * 0.5 | 0, 200 - i, 2, 1); }
-    }
-  }
-  function drawSpotlight(ctx, x, y, t) {
-    t = +t || 0; x = R(x); y = R(y);
-    var top = Math.min(y - 20, -2), H = y - top, fl = 0.05 * Math.sin(t * 7) + 0.03 * Math.sin(t * 13);
-    for (var yy = top; yy <= y; yy++) {
-      var k = (yy - top) / H, hw = R(5 + k * 20);
-      ctx.fillStyle = 'rgba(255,240,150,' + (0.16 + fl).toFixed(3) + ')'; ctx.fillRect(x - hw, yy, hw * 2 + 1, 1);
-      ctx.fillStyle = 'rgba(255,250,210,0.18)'; ctx.fillRect(x - R(hw * 0.45), yy, R(hw * 0.9) + 1, 1);
-    }
-    ellipse(ctx, x, y, 25, 5, 'rgba(255,245,170,0.35)');
-    ellipse(ctx, x, y, 17, 3, 'rgba(255,255,220,0.35)');
-    for (var i = 0; i < 7; i++) { var ph = (t * 0.3 + i / 7) % 1, k2 = (i * 0.137 + 0.2) % 1; if (Math.sin(t * 5 + i * 2) > 0.2) rect(ctx, x + R((k2 - 0.5) * (8 + ph * 30)), R(top + H * ph), 1, 1, '#fffbe0'); }
-  }
 
   // ---- 小物：抜け落ちるうろこ / 蝶 / ハエ / 浮き輪 ----
   var SCALE1 = art(['..ooo..', '.oLLBo.', 'oLBBBDo', 'oBBDBDo', 'oBDBDDo', '.oDDDo.', '..ooo..'], { o: '#9a4a10', L: '#ffc070', B: '#f08a30', D: '#d4661f' });
@@ -2439,7 +2397,6 @@
     split: { splitBody: 18, eyes: 'wide', sweat: true },
     skeleton: { bones: true, eyes: 'x' },
     overeat: { belly: true, eyes: 'happy', mouth: 1, sweat: true },
-    cramped: { scale: 2, eyes: 'smug', sweat: true },
     fishman: { legs: true, drown: true, eyes: 'wide' },
     oldage: { wrinkles: true, eyes: 'sleepy' },
     // 追加の突然死
@@ -2742,15 +2699,6 @@
       { eyes: 'closed', r: 0.06, dy: 1 }, { eyes: 'closed', r: 0.1, dy: 1 },
       { eyes: 'closed', r: 0.12, dy: 1, fx: [['soul', 0]] }, { eyes: 'closed', r: 0.08, dy: 1, fx: [['soul', 1]] }
     ], { variant: 'nowake', soul: false });
-    dieSeq('possessed', [
-      { eyes: 'side', brows: 'worried' }, { surpF: 0 }, { surpF: 1, mark: '!' },
-      m(TW, { sweat: true, dx: -1 }), m(TW, { sweat: true, dx: 1 }),
-      { eyes: 'tight', mouth: 'wavy', mix: ['ghost', 0.2], fx: [['burst', 0]] },
-      { eyes: 'closed', mouth: 'o', mix: ['ghost', 0.4], dx: 1 },
-      { eyes: 'dizzy', mouth: 'wavy', mix: ['ghost', 0.6], a: 0.92, r: 0.15 }, { eyes: 'dizzy', mouth: 'o', mix: ['ghost', 0.8], a: 0.86, r: -0.1 },
-      { ghost: true, eyes: 'x', mouth: 'o', r: -0.1 }, { ghost: true, eyes: 'sleepy', brows: 'worried', mouth: 'wavy', dy: -2 },
-      { ghost: true, eyes: 'sleepy', brows: 'worried', mouth: 'wavy', dy: -3 }, { ghost: true, eyes: 'closed', dy: -1 }
-    ], { variant: 'possessed', eyes: 'closed' });
     // ---- 小物つき（魚の反応だけ。猫の手・鳥・網・UFO・板前の手・隕石は main.js） ----
     dieSeq('cat', [
       { look: 'up', eyes: 'sparkle', mouth: 'smile', blush: true }, { look: 'up', eyes: 'sparkle', mouth: 'smile', blush: true, dy: -1 },
@@ -2830,15 +2778,6 @@
       { eyes: 'wide', wipe: [ST, 0.85] }, { stone: true, eyes: 'wide', fx: [['burst', 0]] }, { stone: true, eyes: 'wide', sy: 0.97, dy: 1 },
       { stone: true, eyes: 'normal', look: 'back' }, { stone: true, eyes: 'normal', look: 'up' }
     ], { variant: 'stone' });
-    dieSeq('split', [
-      {}, { eyes: 'wide', mouth: 'wavy', sweat: true }, { eyes: 'tight', mouth: 'wavy', sweat: true, sx: 1.06, sy: 0.95 },
-      { eyes: 'wide', sweat: true, sx: 1.12, sy: 0.95 }, { eyes: 'surprised', mouth: 'o', sweat: true, sx: 1.2, sy: 0.9, fx: [['shiver', 0]] },
-      { eyes: 'tight', mouth: 'wavy', sweat: true, sx: 1.3, sy: 0.88, fx: [['shiver', 1]] },
-      { splitBody: 1, eyes: 'surprised', mouth: 'o', sweat: true, fx: [['burst', 0]] }, { splitBody: 3, eyes: 'wide', mouth: 'o', sweat: true },
-      { splitBody: 6, eyes: 'tight', mouth: 'wavy', sweat: true }, { splitBody: 9, eyes: 'wide', mouth: 'o', sweat: true },
-      { splitBody: 13, eyes: 'wide', sweat: true }, { splitBody: 17, eyes: 'surprised', mouth: 'o', sweat: true },
-      { splitBody: 18, eyes: 'dizzy', sweat: true, sx: 0.95 }
-    ], { variant: 'split', split: false, eyes: 'wide' });
     // v22 空腹でスケルトン：ぐぅ〜 → だんだん やせる → げっそり（肋骨・背骨が浮く）→ ガクッ → 身がとけて骨だけに
     dieSeq('skeleton', [
       {}, { eyes: 'sleepy', mouth: 'wavy', fx: [['growl', 0]] }, m(TW, { fx: [['growl', 1]] }),
@@ -2855,20 +2794,6 @@
       { belly: true, eyes: 'surprised', mouth: 'o', sweat: true, sx: 1.06, sy: 1.08 }, { belly: true, eyes: 'closed', mouth: 'yawn', fx: [['burp', 0]] },
       { belly: true, eyes: 'dizzy', mouth: 'wavy', sweat: true }
     ], { variant: 'overeat', eyes: 'x' });
-    dieSeq('cramped', [
-      { eyes: 'smug' }, { eyes: 'smug', sc: 1.2 }, { eyes: 'happy', sc: 1.45 }, { eyes: 'happy', sc: 1.7 },
-      { eyes: 'wide', sweat: true, sc: 1.95 }, { eyes: 'wide', mouth: 'o', sweat: true, sc: 2.2 }, { eyes: 'surprised', mouth: 'o', sweat: true, sc: 2.45 },
-      m(TW, { sweat: true, sc: 2.7, sx: 0.96 }), { eyes: 'tight', mouth: 'wavy', sweat: true, sc: 2.95, sx: 0.94 },
-      m(TW, { sweat: true, sc: 3.15, sx: 0.93 }), { eyes: 'dizzy', sweat: true, sc: 3.3, sx: 0.92, sy: 0.96 }
-    ], { variant: 'cramped', eyes: 'x', sc: 3.3 });
-    dieSeq('fishman', [
-      {}, { legs: true, legK: 0.05, eyes: 'surprised', mouth: 'o' }, { legs: true, legK: 0.15, eyes: 'wide', look: 'down' },
-      { legs: true, legK: 0.3, eyes: 'wide', look: 'down' }, { legs: true, legK: 0.45, eyes: 'sparkle', mouth: 'grin' },
-      { legs: true, legK: 0.6, eyes: 'sparkle', mouth: 'grin', dy: -1 }, { legs: true, legK: 0.75, eyes: 'smug' },
-      { legs: true, legK: 0.9, eyes: 'smug', mouth: 'grin' }, { legs: true, legK: 1, eyes: 'wide', mouth: 'o' },
-      { legs: true, legK: 1, eyes: 'wide', mouth: 'o', drown: true, t: 0 }, { legs: true, legK: 1, eyes: 'teary', mouth: 'wavy', drown: true, dy: -1, t: 0.25 },
-      { legs: true, legK: 1, eyes: 'teary', mouth: 'wavy', drown: true, dy: -2, t: 0.5 }, { legs: true, legK: 1, eyes: 'surprised', mouth: 'o', drown: true, dy: -1, t: 0.75 }
-    ], { variant: 'fishman', eyes: 'x' });
     dieSeq('oldage', [
       {}, { eyes: 'sleepy' }, { eyes: 'sleepy', mix: ['old', 0.4] }, { eyes: 'sleepy', mix: ['old', 0.8] },
       { wrinkles: true, eyes: 'sleepy' }, { wrinkles: true, eyes: 'sleepy', sy: 0.96, dy: 1 },
@@ -2877,14 +2802,6 @@
       { wrinkles: true, eyes: 'calm', mouth: 'smile', r: 0.04, dy: 2, fx: [['soul', 1]] },
       { wrinkles: true, eyes: 'x', roll: 0.5, dy: 1 }, { wrinkles: true, eyes: 'x', roll: 0.75 }
     ], { variant: 'oldage', eyes: 'x', flip: true });
-    dieSeq('dragon', [
-      {}, { eyes: 'angry', mouth: 'grin', sx: 0.92, sy: 1.05, fx: [['aura', 0]] }, { eyes: 'angry', mouth: 'grin', sx: 0.9, sy: 1.08, fx: [['aura', 1]] },
-      { eyes: 'tight', mouth: 'wavy', sx: 1.05, sy: 0.95, fx: [['aura', 2], ['shiver', 0]] },
-      { eyes: 'angry', mouth: 'grin', sx: 1.2, sy: 0.9, spikes: 2, fx: [['aura', 0]] }, { eyes: 'angry', mouth: 'yawn', sx: 1.35, sy: 0.85, spikes: 3, fx: [['aura', 1]] },
-      { eyes: 'angry', mouth: 'yawn', sx: 1.5, sy: 0.8, spikes: 4, fx: [['aura', 2]] }, { eyes: 'angry', mouth: 'grin', sx: 1.7, sy: 0.75, spikes: 5, fx: [['burst', 1]] },
-      { dragon: true, sc: 0.6, fx: [['poof', 1]] }, { dragon: true, sc: 0.85, t: 0.1 },
-      { dragon: true, t: 0.25, dy: -1 }, { dragon: true, t: 0.4, dy: -1 }
-    ], { variant: 'dragon' });
     dieSeq('golden', [
       {}, { eyes: 'closed', mouth: 'smile', fx: [['sparkle', 0]] }, { eyes: 'closed', mouth: 'smile', dy: -1, fx: [['sparkle', 1]] },
       { eyes: 'wide', mark: '?', wipe: [GD, 0.15] }, { eyes: 'surprised', mouth: 'o', wipe: [GD, 0.3] }, { eyes: 'surprised', mouth: 'o', wipe: [GD, 0.45], dx: 1 },
@@ -2899,10 +2816,6 @@
       { eyes: 'closed', r: 1.3, dy: -8, mound: 1, fx: [['sand', 1]] }, { r: 1.57, dy: -3, mound: 1, fx: [['sand', 2]] },
       { r: 1.57, dy: 1, swimF: 0, mound: 1 }, { r: 1.57, dy: 3, swimF: 2, mound: 1 }, { r: 1.57, dy: 6, swimF: 0, mound: 1 }
     ], { hermit: true });
-    dieSeq('giant', [
-      { eyes: 'wide' }, { eyes: 'wide', sc: 1.3, r: -0.2 },
-      { eyes: 'wide', sc: 1.55, r: -0.42 }, { eyes: 'tight', sc: 1.8, r: -0.62 }
-    ], { variant: 'giant', sc: 2, r: -0.74 });
     dieSeq('cleanfreak', [
       { eyes: 'surprised', mark: '!', palette: 'sky' },
       { eyes: 'tight', mouth: 'wavy', palette: 'sky', dx: -3, r: -0.2 },
@@ -2928,7 +2841,6 @@
   })();
 
   // ===================== v16 追加：掃除機・新しい芸・イベント・死因の小物 =====================
-  var HSK = { s: '#f7c6a3', d: '#e0a07a', n: '#ffe8de', c: '#c98466' };
   function segD(px, py, ax, ay, bx, by) {
     var dx = bx - ax, dy = by - ay, L = dx * dx + dy * dy, u = L ? ((px - ax) * dx + (py - ay) * dy) / L : 0;
     u = u < 0 ? 0 : u > 1 ? 1 : u;
@@ -2983,33 +2895,6 @@
   }
 
   // ---- じゃんけんの手（上から差し出す）：(x,y)=手のひらの中心。sign: rock|scissors|paper ----
-  function handGrid(sign) {
-    return v16('hand' + sign, 40, 44, function (g) {
-      var fing = [];
-      if (sign === 'scissors') fing = [[-2, 4, -7, 15], [2, 4, 6, 15]];
-      if (sign === 'paper') fing = [[-5, 2, -12, 8], [-3, 4, -6, 15], [0, 5, 0, 17], [3, 4, 6, 15], [5, 2, 10, 11]];
-      var knuck = sign === 'paper' ? [] : [[-5, 5], [-2, 6], [1, 6], [4, 5]];
-      g.stamp(function (x, y) {
-        var px = x + 0.5, py = y + 0.5, i;
-        for (i = 0; i < fing.length; i++) {
-          var f = fing[i], d = segD(px, py, f[0], f[1], f[2], f[3]);
-          if (d < 1.9) { var tip = segD(px, py, f[2], f[3], f[2], f[3]) < 2.2; return tip ? HSK.n : (px > (f[0] + f[2]) / 2 + 0.6 ? HSK.d : HSK.s); }
-        }
-        if (py < -2 && Math.abs(px) < 5.5) return px > 2.5 ? HSK.d : HSK.s;         // 手首
-        var e = px * px / 52 + py * py / 34;
-        if (e < 1) return px > 3.5 ? HSK.d : HSK.s;                                  // 手のひら
-        for (i = 0; i < knuck.length; i++) { var k = knuck[i]; if ((px - k[0]) * (px - k[0]) + (py - k[1]) * (py - k[1]) < 4.2) return HSK.s; }
-        if (sign !== 'paper' && segD(px, py, -7, -1, -8, 4) < 1.8) return HSK.s;       // 親指
-        return null;
-      }, O, [-19, -21, 19, 21]);
-      for (var i = 0; i < knuck.length - 1 && sign !== 'paper'; i++) g.set(knuck[i][0] + 1, knuck[i][1] + 1, HSK.c); // 指のすき間
-    });
-  }
-  function drawHand(ctx, x, y, o) {
-    o = o || {}; x = R(x); y = R(y);
-    for (var yy = Math.max(0, y - 120); yy < y - 4; yy++) { rect(ctx, x - 7, yy, 15, 1, O); rect(ctx, x - 6, yy, 13, 1, HSK.s); rect(ctx, x + 3, yy, 3, 1, HSK.d); }
-    blit(ctx, handGrid(o.sign || 'rock'), x, y);
-  }
 
   // ---- 釣り針（糸は画面の上から）：(x,y)=針の曲がりの底。worm=ミミズ ----
   var HOOK_PTS = (function () { var p = [], i; for (i = -16; i <= -3; i++) p.push([4, i]); for (i = 0; i <= 9; i++) { var a = i / 9 * Math.PI * 1.1; p.push([R(Math.cos(a) * 4), R(-3 + Math.sin(a) * 4)]); } p.push([-4, -4], [-4, -5], [-3, -6]); return p; })();
@@ -4498,47 +4383,16 @@
     drawNetFront(ctx, x, y, o);
   }
 
-  // 猫の手（約25x26、原点＝手のひらの中心）。上に腕が伸びる。肉球と出した爪
-  var PAW = (function () {
-    var g = new Grid(30, 34, 15, 18);
-    var A = '#302024', shadow = '#523437', pk = '#ff9ab0', pkd = '#ef6d91';
-    var toes = [[-7.5, 7], [-2.5, 9], [2.5, 9], [7.5, 7]];
-    g.stamp(function (x, y) {
-      var px = x + 0.5, py = y + 0.5, i;
-      var inArm = px >= -8 && px <= 8 && py <= 0 && py >= -18;
-      var dx = px / 11.5, dy = (py - 2) / 7.5, inPalm = dx * dx + dy * dy <= 1;
-      var inToe = -1;
-      for (i = 0; i < 4; i++) { var tx = px - toes[i][0], ty = py - toes[i][1]; if (tx * tx + ty * ty <= 9.5) inToe = i; }
-      if (!inArm && !inPalm && inToe < 0) return null;
-      // 肉球
-      var pdx = px / 4.6, pdy = (py - 2.5) / 3.2;
-      if (pdx * pdx + pdy * pdy <= 1) return py > 3.5 ? pkd : pk;
-      if (inToe >= 0) { var bx = px - toes[inToe][0], by = py - toes[inToe][1] - 0.6; if (bx * bx + by * by <= 2.2) return pk; }
-      return px > 4 ? shadow : A;
-    }, O);
-    // 指の間の線
-    [-5, 0, 5].forEach(function (x) { g.set(x, 8, O); g.set(x, 9, O); });
-    // 爪先はクリーム色の小さな丸み。
-    toes.forEach(function (t, i) {
-      var tx = Math.round(t[0]), ty = Math.round(t[1]) + 3, c = i < 2 ? 1 : -1;
-      g.set(tx, ty, '#ffffff'); g.set(tx, ty + 1, CREAM); g.set(tx + c, ty + 1, CREAM);
-      g.set(tx - c, ty + 1, '#9aa0a8'); g.set(tx - c, ty, O); g.set(tx + c, ty + 3, O); g.set(tx, ty + 2, O);
-    });
-    g.K = O; g.keep = ['#ffffff', pk];
-    return g;
-  })();
   // opts（省略可）: { fish: true で爪に引っかけた金魚, t: 秒 }
-  function drawCatPaw(ctx, x, y, opts) {
+  function drawCatPaw(ctx, x, y, opts) {   // v23 P5c：ユーザーの絵の猫の手。(x,y)＝肉球
     x = R(x); y = R(y);
     var o = opts && typeof opts === 'object' ? opts : {};
-    if (o.fish) drawFish(ctx, x + 1, y + 17, { scale: 0.7, eyes: 'x', t: 0, rot: 0.2, dir: 1, fx: false });
-    var top = y - 18;
-    if (top > 0) {
-      rect(ctx, x - 9, 0, 1, top, O); rect(ctx, x + 9, 0, 1, top, O);
-      rect(ctx, x - 8, 0, 17, top, CAT_D); rect(ctx, x + 5, 0, 4, top, CAT_SH);
-    }
-    blit(ctx, PAW, x, y);
+    if (o.fish) drawFish(ctx, x + 1, y + 13, { scale: 0.7, eyes: 'x', t: 0, rot: 0.2, dir: 1, fx: false });
+    var top = y - 43;   // 絵の上のはしより上は、腕をのばす
+    if (top > 0) { rect(ctx, x - 7, 0, 14, top + 1, FK); rect(ctx, x - 5, 0, 10, top + 1, '#3a3036'); }
+    drawAsset(ctx, 'catpaw', x, y);
   }
+
 
   var FEATHER = art([
     '.....o.....',
@@ -4862,8 +4716,8 @@
         flash(19, -13); flash(-19, 13);
         break;
       case 'cat':
-        prop(8, -2, 0.67, function (ctx) { drawCatShadow(ctx, 0, 0, t); });
-        prop(22, 0, 0.72, function (ctx) { blit(ctx, PAW, 0, 0); });
+        drawAsset(ctx, 'cat', x + R(6 * u), y + R(6 * u), { scale: 0.42 * u });
+        drawAsset(ctx, 'catpaw', x + R(22 * u), y + R(2 * u), { scale: 0.62 * u });
         react(-7, 7, { dir: -1, rot: -0.25 });
         flash(-22, -8);
         break;
@@ -5004,18 +4858,6 @@
       case 'overeat':
         if (big) { drawPellet(ctx, x - 24, y + 14, 'normal'); drawPellet(ctx, x + 24, y + 16, 'normal'); drawPellet(ctx, x + 18, y + 18, 'normal'); }
         F(0, -3, { scale: fs * 0.94, mouth: 'grin' }); break;
-      case 'cramped':
-        if (big) { // 四角い水槽にぎっちり。ガラスに頬が押しつく
-          rect(ctx, x - 28, y - 18, 56, 36, O); rect(ctx, x - 27, y - 17, 54, 34, WATER);
-          rect(ctx, x - 27, y + 14, 54, 3, SAND);
-          F(-1, 0, { scale: 1.3, eyes: 'dizzy', sweat: false, sx: 0.92 });
-          ctx.fillStyle = 'rgba(255,255,255,0.75)'; ctx.fillRect(x + 25, y - 6, 2, 12); ctx.fillStyle = 'rgba(255,200,180,0.8)'; ctx.fillRect(x + 23, y - 4, 2, 8);
-          rect(ctx, x - 29, y - 19, 58, 1, O); rect(ctx, x - 29, y + 18, 58, 1, O); rect(ctx, x - 29, y - 19, 1, 38, O); rect(ctx, x + 28, y - 19, 1, 38, O);
-        } else {
-          F(0, 0, { scale: fs * 1.12, eyes: 'dizzy', mouth: 'o' });
-          rect(ctx, x - 9, y - 7, 18, 1, O); rect(ctx, x - 9, y + 6, 18, 1, O); rect(ctx, x - 9, y - 7, 1, 14, O); rect(ctx, x + 8, y - 7, 1, 14, O);
-        }
-        break;
       case 'fishman':
         if (big) { surf(-17); drawFloatRing(ctx, x + 20, y - 19, t); }
         F(0, -2, { legLen: big ? 6 : 4, eyes: 'surprised', mouth: 'o' }); break;
@@ -5459,11 +5301,6 @@
     for (f = 0; f < 2; f++) { buildCrab(f, false, false); buildCrab(f, true, false); buildCrab(f, false, true); buildCrab(f, true, true); }
     for (f = 0; f < 4; f++) buildShrimp(f, false); buildShrimp(0, true);
     for (f = 0; f < 4; f++) {
-      buildTurtle(f, true, 0, 0, '', false);
-      buildTurtle(f, true, 0, 0, '', true);
-      buildTurtle(f, false, 0, 0, '', false);
-      buildCatfish(f, 0, true, false, false);
-      for (var m = 0; m <= 6; m++) buildCatfish(f, m / 6, false, false, false);
     }
     for (f = 0; f < 8; f++) {
       for (var d = 0; d <= 6; d++) buildLoach(f, d / 6, false);
@@ -5492,49 +5329,16 @@
   // ---- イベント用の小物（猫の影・怪しい粒・合図の吹き出し） ----
   // ====================================================================
   // 猫の顔の上半分（耳・目・ひげ）。原点 = 顔の下端の中心（水面の高さ）
-  var CAT_D = '#302024', CAT_SH = '#523437', CAT_Y = '#ffcf31';
-  function buildCatShadow(angry, flee, blink) {
-    return v16('cat:' + angry + flee + blink, 64, 62, function (g) {
-      g.stamp(function (x, y) {
-        var ax = Math.abs(x + 0.5);
-        var ear = y >= -29 && y < -16 && ax >= 8 + (-16 - y) * 0.56 && ax < 20;
-        var head = y >= -20 && y <= (flee ? -12 : -1) && ax < 23 - Math.max(0, -15 - y) * 0.45;
-        if (ear && ax > 12 + (-16 - y) * 0.46 && ax < 17 && y > -26) return CAT_Y;
-        if (head || ear) return ax > 19 ? CAT_SH : CAT_D;
-        return null;
-      }, O, [-26, -30, 26, 0]);
-      var ey = flee ? -16 : -11;
-      [-10, 10].forEach(function (ex) {
-        if (blink) { g.line([[ex - 4, ey], [ex + 4, ey]], '#fff1db'); return; }
-        if (angry) {
-          g.stamp(function (x, y) {
-            return y >= ey - 1 + R((x - ex) * (ex < 0 ? 0.45 : -0.45)) &&
-              pE(x, y, ex, ey, 5.6, 5.1) ? '#ffffff' : null;
-          }, O, pBox(ex, ey, 6, 6));
-          g.set(ex, ey + 2, O); g.set(ex + 1, ey + 2, O);
-        } else popEye(g, ex, ey, flee ? 3.5 : 5.4, 1);
-      });
-      if (!flee) {
-        friendMouth(g, 0, -5, 3.2, 1.2);
-        for (var j = -1; j <= 1; j++) {
-          g.line([[-20, -7 + j * 3], [-29, -7 + j * 4]], O);
-          g.line([[19, -7 + j * 3], [28, -7 + j * 4]], O);
-        }
-        if (!angry) {
-          friendOval(g, -18, -2, 3.6, 2.4, CREAM);
-          friendOval(g, 18, -2, 3.6, 2.4, CREAM);
-        }
-      }
-    });
-  }
+
   // (x,y)=水面。耳と白目を残して引っ込む。
-  function drawCatShadow(ctx, x, y, t, o) {
+  function drawCatShadow(ctx, x, y, t, o) {   // v23 P5c：水面の上からのぞく黒猫（ユーザーの絵）
     o = o || {}; t = num(t, 0);
     x = R(num(x, 80)); y = R(num(y, 40));
-    var bob = R(Math.sin(t * 1.7)), blink = !o.angry && !o.flee && (t % 3.2) > 3.05;
-    blit(ctx, buildCatShadow(!!o.angry, !!o.flee, blink), x, y + bob);
-    if (o.angry && !o.flee) drawMark(ctx, x + 22, y - 26 + bob, 'anger', t, 1);
+    var bob = R(Math.sin(t * 1.7));
+    drawAsset(ctx, 'cat', x, y + 10 + bob, { scale: 0.75 });
+    if (o.angry && !o.flee) drawMark(ctx, x + 18, y - 30 + bob, 'anger', t, 1);
   }
+
 
   // 怪しく虹色に光る粒（約 9px＋光の輪）
   var RAINBOW = ['#ff5a6a', '#ffa23a', '#ffe24a', '#6ae06a', '#4ac8ff', '#8a7aff', '#e06aff'];
@@ -6083,7 +5887,6 @@
     g.set(lx, ly, PK); g.set(lx + 1, ly, PK); g.set(lx, ly + 1, PK); g.set(lx + 1, ly + 1, PK); g.set(lx, ly, '#ffffff');
   }
   function popBlush(g, x, y) { g.set(x, y, POP_BL); g.set(x + 1, y, POP_BL); }
-  function popSmile(g, x, y, w) { g.set(x, y, PK); for (var i = 1; i < w; i++) g.set(x + i, y + 1, PK); g.set(x + w, y, PK); }
   // 3色ぬり（下は影・左上はハイライト）
   function shade3(x, y, cx, cy, ry, base, dark, light) { var py = y + 0.5 - cy; return py > ry * 0.38 ? dark : (py < -ry * 0.45 && x + 0.5 < cx) ? light : base; }
   var popCache = {}, popN = 0;
@@ -6093,8 +5896,7 @@
   function friendOval(g, x, y, rx, ry, color, outline) {
     g.stamp(function (px, py) { return pE(px, py, x, y, rx, ry) ? color : null; },
       outline === false ? false : PK, pBox(x, y, rx, ry));
-  }
-  function friendMouth(g, x, y, width, height) {
+  }  function friendMouth(g, x, y, width, height) {
     friendOval(g, x, y, width + 1, height + 1, PK);
     friendOval(g, x, y, width, height, FRIEND_RED, false);
   }
@@ -6272,78 +6074,20 @@
     return g;
   }
 
-  // ---- ミドリガメ（原点＝甲羅のふちの中心） ----
-  function buildTurtle(fr, walk, nk, hid, tailCol, happy, surprised) {
-    return popGet('tu' + fr + ':' + walk + ':' + nk + ':' + hid + ':' + tailCol + ':' + happy + ':' + surprised, function () {
-      var g = new Grid(70, 36, 31, 25);
-      var green = '#b9d84d', shadow = '#85ae36', step = fr === 1 ? 1 : fr === 3 ? -1 : 0;
-      if (hid < 0.5) {
-        for (var i = -1; i <= 1; i += 2) {
-          var lx = i * 10, shift = i * step;
-          friendOval(g, lx - 4, walk ? 4 : 2, 3.2, 2.2, shadow);
-          g.stamp(function (x, y) {
-            if (walk) return pSeg(x, y, lx, 1, lx + shift, 6, 2.8) ? green : null;
-            return pSeg(x, y, lx, 1, lx - 4 + shift * 2, 4 + shift, 2.5) ? green : null;
-          }, PK, pBox(lx, 3, 8, 7));
-        }
-        g.stamp(function (x, y) {
-          return pSeg(x, y, -14, 0, -19, 2 + step, 1.4) ? shadow : null;
-        }, PK, [-22, -3, -11, 7]);
-      }
-      var hx = R(18 + nk * 5 - hid * 10), hy = R(-6 - nk * 5);
-      if (hid < 0.9) {
-        g.stamp(function (x, y) {
-          if (!pE(x, y, hx, hy, 6.5, 5.5) && !pSeg(x, y, 11, 0, hx - 1, hy + 1, 3.4)) return null;
-          return y > hy + 2 && (y + x > hx + hy + 1) ? FRIEND_CREAM : green;
-        }, PK, [7, hy - 7, hx + 8, 5]);
-        friendOval(g, hx - 4, hy - 1, 1.9, 2.8, FRIEND_RED, false);
-        popEye(g, hx - (surprised ? 2 : 1), hy - 5, surprised ? 3.7 : 2.7, 1, happy);
-        popEye(g, hx + 4, hy - 4, surprised ? 3.6 : 2.8, 1, happy);
-        if (happy) popSmile(g, hx + 1, hy + 1, 3);
-        else friendMouth(g, hx + 3, hy + 2, 2.1, surprised ? 2.4 : 1);
-      }
-      if (tailCol) {
-        var tc = PAL[tailCol === 'orange' ? 'normal' : tailCol] || PAL.normal;
-        g.stamp(function (x, y) {
-          var dx = x + 0.5 - 13, dy = y + 0.5 + 3;
-          if (dx < 0 || dx > 10 || Math.abs(dy) > 1 + dx * 0.56 || (dx > 7 && Math.abs(dy) < 1)) return null;
-          return dy > 1 ? tc.B : tc.F;
-        }, PK, [12, -12, 24, 6]);
-        gline(g, 16, -3, 21, -6, PK);
-        gline(g, 16, -3, 21, 0, PK);
-      }
-      g.stamp(function (x, y) {
-        if (y > 1 || !pE(x, y, 0, 1, 16, 14)) return null;
-        if (!pE(x, y, 0, 1, 15.1, 13.1)) return PK;
-        if (y >= -2) return '#547d2a';
-        var px = x + 0.5;
-        if (Math.abs(px) < 5 && y >= -7 && y <= -3 && Math.abs(px) + y < -1) return '#97b744';
-        if (Math.abs(px) < 6 && y < -8) return '#97b744';
-        return Math.abs(px) > 6 && y < -4 - Math.abs(px) * 0.18 ? '#729e39' : '#406b2b';
-      }, PK, [-18, -15, 18, 2]);
-      g.stamp(function (x, y) {
-        return y >= 0 && y <= 2 && Math.abs(x + 0.5) < (y === 2 ? 14 : 16) ? '#f6d457' : null;
-      }, PK, [-17, -1, 17, 4]);
-      return g;
-    });
-  }
-  function drawTurtle(ctx, x, y, t, o) {
+
+  function drawTurtle(ctx, x, y, t, o) {   // v23 P5c：ユーザーの絵のミドリガメ（泳ぐ4コマ）
     o = o || {};
-    var fr = Math.floor(num(t, 0) * 6) & 3;
-    var neck = Math.round(Math.max(0, Math.min(1, +o.neck || 0)) * 4) / 4;
-    var hide = Math.round(Math.max(0, Math.min(1, +o.hide || 0)) * 4) / 4;
-    var bob = o.walk && (fr & 1) ? -1 : 0;
-    if (o.surprised && !hide && drawAsset(ctx, 'turtle', x, y + bob, { dir: o.dir < 0 ? -1 : 1, scale: o.scale || 1 })) return;
-    blit(ctx, buildTurtle(fr, !!o.walk, neck, hide, o.tailColor || '', !!o.happy, !!o.surprised), x, y + bob,
-      { mirror: o.dir < 0, scale: o.scale || 1 });
+    var f = o.still ? 0 : Math.floor(num(t, 0) * 5) & 3;
+    drawAsset(ctx, 'turtle', x, y, { dir: o.dir < 0 ? -1 : 1, scale: o.scale || 1, frame: f, sy: o.hide ? 1 - 0.15 * o.hide : 1 });
   }
+
 
   // v23 P5：カメが頭をこちら（画面の前）に向けて、じっと見る。o.look 0..1（0=横顔、1=正面）、o.blink
   function drawTurtleLook(ctx, x, y, t, o) {
     o = o || {}; var d = o.dir < 0 ? -1 : 1, sc = o.scale || 1;
-    if (!drawAsset(ctx, 'turtle', x, y, { dir: d, scale: sc })) { drawTurtle(ctx, x, y, t, o); return; }
+    drawAsset(ctx, 'turtle', x, y, { dir: d, scale: sc, frame: 0 });
     if (!(o.look > 0.5)) return;
-    var hx = R(x + d * 17 * sc), hy = R(y - 16 * sc), k = sc;
+    var hx = R(x + d * 14 * sc), hy = R(y - 10 * sc), k = sc * 1.15;
     var E = function (dx, dy, rx, ry, c) { ellipse(ctx, hx + R(dx * k), hy + R(dy * k), Math.max(1, R(rx * k)), Math.max(1, R(ry * k)), c); };
     var Q = function (dx, dy, w, h, c) { rect(ctx, hx + R(dx * k), hy + R(dy * k), Math.max(1, R(w * k)), Math.max(1, R(h * k)), c); };
     E(0, 0, 10, 8, '#2a1408'); E(0, 0, 9, 7, '#cce43c'); E(0, 3, 8, 4, '#b4d030'); E(-2, -4, 4, 2, '#e4f48c');
@@ -6358,31 +6102,31 @@
   }
 
   // v23 P5：ボタンの絵（参考画像13の上の段）。32x28 の水色の札に、金魚と道具。kind = feed / clean / touch / net
-  function drawButtonIcon(ctx, kind, color) {
-    var W2 = 32, H2 = 28, fc = color || 'orange';
-    rect(ctx, 2, 0, W2 - 4, H2, FK); rect(ctx, 0, 2, W2, H2 - 4, FK); rect(ctx, 1, 1, W2 - 2, H2 - 2, FK);
-    rect(ctx, 2, 2, W2 - 4, H2 - 4, '#86e8dc'); rect(ctx, 3, 3, W2 - 6, 2, '#c4f6ee'); rect(ctx, 2, H2 - 6, W2 - 4, 4, '#6fd6c9');
-    var yel = '#ffc83a', ex = function (x, y) { rect(ctx, x, y, 1, 3, yel); rect(ctx, x + 3, y - 1, 1, 4, yel); rect(ctx, x + 6, y, 1, 3, yel); };
-    if (kind === 'net') {   // 網は金魚のうしろ
-      for (var n = 0; n < 7; n++) { rect(ctx, 11 + n, 13 + n, 2, 1, FK); rect(ctx, 12 + n, 13 + n, 1, 1, '#d89a4a'); }   // 柄
-      ellipse(ctx, 8, 11, 6, 7, '#2a4a8a'); ellipse(ctx, 8, 11, 5, 6, '#e8fbff');
-      for (var m = -4; m <= 4; m += 2) { rect(ctx, 8 + m, 6, 1, 11, '#9fd8e8'); rect(ctx, 4, 11 + m, 9, 1, '#9fd8e8'); }
+  function drawButtonIcon(ctx, kind) {   // v23 P5c：道具だけの絵（えさ・ブラシ・指・網）。32x28
+    var B = FK, yel = '#ffc83a';
+    var ex = function (x, y) { rect(ctx, x, y, 1, 3, yel); rect(ctx, x + 3, y - 1, 1, 4, yel); rect(ctx, x + 6, y, 1, 3, yel); };
+    if (kind === 'feed') {   // えさ皿と粒
+      [[9, 13], [16, 13], [23, 13], [12, 8], [19, 8]].forEach(function (p) { ellipse(ctx, p[0], p[1], 3, 3, B); ellipse(ctx, p[0], p[1], 2, 2, '#9a5a24'); rect(ctx, p[0] - 1, p[1] - 2, 1, 1, '#d8925a'); });
+      rect(ctx, 4, 16, 24, 9, B); rect(ctx, 5, 26, 22, 1, B); rect(ctx, 5, 17, 22, 7, '#fff0c8'); rect(ctx, 5, 21, 22, 3, '#e8c88a'); rect(ctx, 6, 18, 6, 1, '#ffffff');
+      ex(22, 4);
+    } else if (kind === 'clean') {   // ブラシ
+      for (var n = 0; n < 10; n++) { rect(ctx, 2 + n, 1 + n, 4, 1, B); rect(ctx, 3 + n, 1 + n, 2, 1, '#c8803a'); }
+      rect(ctx, 9, 9, 16, 16, B); rect(ctx, 10, 10, 14, 14, '#fff4d8'); rect(ctx, 10, 10, 14, 4, '#a85a2a');
+      for (var m = 0; m < 4; m++) rect(ctx, 12 + m * 3, 15, 1, 8, '#e0c890');
+      rect(ctx, 26, 3, 1, 5, yel); rect(ctx, 24, 5, 5, 1, yel); rect(ctx, 28, 11, 1, 3, yel); rect(ctx, 27, 12, 3, 1, yel);
+    } else if (kind === 'touch') {   // 指さし
+      rect(ctx, 11, 0, 10, 19, B); rect(ctx, 12, 0, 8, 19, '#ffd2b0'); rect(ctx, 18, 0, 2, 19, '#e8a888');   // 人さし指（上から）
+      rect(ctx, 12, 19, 8, 2, B); rect(ctx, 13, 21, 6, 1, B); rect(ctx, 12, 18, 8, 1, '#ffd2b0'); rect(ctx, 13, 19, 6, 2, '#ffd2b0');
+      rect(ctx, 13, 14, 6, 4, '#fff0e4'); rect(ctx, 13, 14, 6, 1, '#e8a888');   // つめ
+      ex(4, 22); ex(22, 22);
+    } else if (kind === 'net') {   // 網
+      for (var q = 0; q < 12; q++) { rect(ctx, 16 + q, 16 + q * 0.9, 3, 2, B); rect(ctx, 17 + q, 16 + q * 0.9, 1, 1, '#d89a4a'); }
+      ellipse(ctx, 11, 11, 10, 10, '#2a4a8a'); ellipse(ctx, 11, 11, 8, 8, '#e8fbff');
+      for (var m2 = -6; m2 <= 6; m2 += 3) { rect(ctx, 11 + m2, 4, 1, 15, '#9fd8e8'); rect(ctx, 4, 11 + m2, 15, 1, '#9fd8e8'); }
+      ex(23, 3);
     }
-    drawFish(ctx, 20, 15, { color: fc, stage: 2, dir: -1, scale: 0.45, eyes: kind === 'clean' ? 'normal' : 'wide', mouth: kind === 'feed' ? 'o' : 'normal', swimF: 0 });
-    if (kind === 'feed') {
-      rect(ctx, 3, 19, 9, 6, FK); rect(ctx, 4, 20, 7, 4, '#fff0c8'); rect(ctx, 4, 22, 7, 2, '#e8c88a');
-      for (var i = 0; i < 3; i++) rect(ctx, 4 + i * 2 + (i & 1), 18 - (i & 1), 2, 2, '#8a4a1c');
-      ex(5, 5);
-    } else if (kind === 'clean') {
-      for (var n = 0; n < 6; n++) { rect(ctx, 3 + n, 4 + n, 3, 1, FK); rect(ctx, 4 + n, 4 + n, 1, 1, '#c8803a'); }   // 柄
-      rect(ctx, 6, 9, 8, 9, FK); rect(ctx, 7, 10, 6, 7, '#fff4d8'); for (var m = 0; m < 3; m++) rect(ctx, 8 + m * 2, 12, 1, 5, '#e0c890'); rect(ctx, 7, 10, 6, 2, '#a85a2a');
-      rect(ctx, 6, 4, 1, 3, yel); rect(ctx, 5, 5, 3, 1, yel);
-    } else if (kind === 'touch') {   // 上から指
-      for (var k = 0; k < 6; k++) { rect(ctx, 8 + k, 2 + k, 5, 1, FK); rect(ctx, 9 + k, 2 + k, 3, 1, '#ffd2b0'); }
-      rect(ctx, 14, 8, 4, 1, FK); rect(ctx, 15, 7, 2, 1, '#fff0e4');
-      ex(24, 3);
-    } else if (kind === 'net') ex(20, 3);
   }
+
 
   // 甲羅ぼしの岩山。岩の頂点を top に合わせる。
   function buildBaskRock(top) {
@@ -6479,69 +6223,14 @@
       { mirror: o.dir < 0, scale: o.scale || 1 });
   }
 
-  // ---- ナマズ（原点＝体の中心。飲みこむ口は +26,0） ----
-  function buildCatfish(fr, op, belly, tail, happy) {
-    return popGet('cf' + fr + ':' + op + ':' + belly + ':' + tail + ':' + happy, function () {
-      var g = new Grid(76, 42, 34, 22), blue = '#495670', fin = '#64728a', dark = '#364159';
-      var wag = fr === 1 ? 1 : fr === 3 ? -1 : 0;
-      g.stamp(function (x, y) {
-        var dx = -x - 18, dy = y + 0.5 - wag;
-        if (dx < 0 || dx > 10 || Math.abs(dy) > 2 + dx * 0.48) return null;
-        return dy > 1 ? dark : fin;
-      }, PK, [-31, -10, -16, 10]);
-      gline(g, -22, 0, -27, wag - 3, PK);
-      gline(g, -22, 1, -27, wag + 3, PK);
-      friendOval(g, -6, -11, 5.7, 3.7, fin);
-      gline(g, -9, -10, -4, -13, PK);
-      g.stamp(function (x, y) {
-        if (!pE(x, y, -7, 0, 16, 7.5) && !pE(x, y, 9, 0, 17, 9.5) &&
-            !(belly && pE(x, y, 9, 5, 15, 10))) return null;
-        if (!pE(x, y, -7, 0, 15.2, 6.7) && !pE(x, y, 9, 0, 16.2, 8.7) &&
-            !(belly && pE(x, y, 9, 5, 14.2, 9.2))) return PK;
-        return y >= (belly ? 1 : 4) ? (belly && y > 11 ? '#f0cda5' : '#fff0d8') :
-          y > 1 ? dark : blue;
-      }, PK, [-25, -11, 28, 16]);
-      friendOval(g, -3, 7, 5, 2.7, fin);
-      gline(g, -5, 6, -1, 8, PK);
-      if (belly) {
-        gline(g, 7, 7, 7, 11, '#f0cda5');
-        gline(g, 12, 6, 13, 11, '#f0cda5');
-      }
-      var mh = R(op * 6);
-      for (var i = 0; i < 3; i++) {
-        var root = 2 + i * 2 + mh, end = root + 3 + i * 2;
-        gline(g, 21 - i * 3, root, 27 - i, root + 1, PK);
-        gline(g, 27 - i, root + 1, 34 - 2 * i, end + wag, PK);
-      }
-      popEye(g, 11, -8, 4.1, 1, happy && !mh);
-      popEye(g, 21, -7, 4.2, 1, happy && !mh);
-      if (mh) {
-        g.stamp(function (x, y) {
-          if (!pE(x, y, 25, 0, 4 + op * 2, mh + 1)) return null;
-          if (!pE(x, y, 25, 0, 3 + op * 2, mh)) return '#ff734e';
-          return y >= mh * 0.45 && x > 21 ? '#e44d39' : '#481c18';
-        }, PK, [17, -9, 33, 9]);
-      } else {
-        friendMouth(g, 23, 0, 4.2, 1.5);
-        gline(g, 22, 0, 25, 0, PK);
-      }
-      if (tail) {
-        g.stamp(function (x, y) {
-          return pSeg(x, y, 26, 0, 32, -4, 1.6) ||
-            pSeg(x, y, 26, 0, 32, 4, 1.6) ? '#ff9512' : null;
-        }, PK, [23, -7, 35, 7]);
-      }
-      return g;
-    });
-  }
-  function drawCatfish(ctx, x, y, t, o) {
+
+  function drawCatfish(ctx, x, y, t, o) {   // v23 P5c：ユーザーの絵のナマズ（8コマ：0-1 ふつう、2-5 口があく、6-7 とじる）
     o = o || {};
-    var fr = Math.floor(num(t, 0) * 6) & 3;
-    var op = Math.round(Math.max(0, Math.min(1, +o.open || 0)) * 6) / 6;
-    if (op < 0.17 && !o.belly && drawAsset(ctx, 'catfish', x, y + ((fr & 2) ? 1 : 0), { dir: o.dir < 0 ? -1 : 1, scale: +o.scale || 1 })) return;
-    blit(ctx, buildCatfish(fr, op, !!o.belly, !!o.tail, !!o.happy), x, y,
-      { mirror: o.dir < 0, scale: +o.scale || 1 });
+    var op = Math.max(0, Math.min(1, +o.open || 0));
+    var f = op > 0.05 ? 2 + Math.min(3, Math.floor(op * 4)) : (o.belly ? 6 : (Math.floor(num(t, 0) * 3) & 1));
+    drawAsset(ctx, 'catfish', x, y + (o.belly ? 1 : 0), { dir: o.dir < 0 ? -1 : 1, scale: +o.scale || 1, frame: f, sy: o.belly ? 1.08 : 1 });
   }
+
 
   // ================= v23：水槽のかざり（図鑑3つごとに1段、最大16段） =================
   var DECOR_MAX = 16;
@@ -6838,7 +6527,7 @@
 
   var GoldfishSprites = {
     drawAsset: drawAsset, hasAsset: hasAsset,
-    zukanCols: zukanCols, drawTurtle: drawTurtle, drawTurtleLook: drawTurtleLook, drawButtonIcon: drawButtonIcon, drawBaskRock: drawBaskRock, drawLoach: drawLoach, drawCatfish: drawCatfish, drawDecor: drawDecor, DECOR_MAX: DECOR_MAX,
+    zukanCols: zukanCols, drawTurtle: drawTurtle, drawTurtleLook: drawTurtleLook, assetBox: assetBox, drawButtonIcon: drawButtonIcon, drawBaskRock: drawBaskRock, drawLoach: drawLoach, drawCatfish: drawCatfish, drawDecor: drawDecor, DECOR_MAX: DECOR_MAX,
     drawTank: drawTank, drawSandFront: drawSandFront,
     drawFish: drawFish,
     drawPellet: drawPellet,
@@ -6875,13 +6564,11 @@
     // 追加の死因の小物
     drawCrack: drawCrack,
     drawSoul: drawSoul,
-    drawBigFace: drawBigFace,
-    drawSmear: drawSmear,
+        drawSmear: drawSmear,
     drawDragon: drawDragon,
     drawScale: drawScale,
     drawHermit: drawHermit,
-    drawSpotlight: drawSpotlight,
-    // 水槽の仲間・おもちゃ
+        // 水槽の仲間・おもちゃ
     drawSnail: drawSnail,
     drawCrab: drawCrab,
     drawShrimp: drawShrimp,
@@ -6902,7 +6589,7 @@
     drawGhost: drawGhost,
     drawBaby: drawBaby,
     // v16
-    drawVacuum: drawVacuum, drawHand: drawHand, drawHook: drawHook, drawSun: drawSun, drawThermo: drawThermo, drawIce: drawIce,
+    drawVacuum: drawVacuum, drawHook: drawHook, drawSun: drawSun, drawThermo: drawThermo, drawIce: drawIce,
     drawTowel: drawTowel, drawCamera: drawCamera, drawPolaroid: drawPolaroid, drawTopHat: drawTopHat, drawGlove: drawGlove,
     drawPigeon: drawPigeon, drawFishStar: drawFishStar,
     COLORS: ['orange', 'lime', 'pink', 'yellow', 'sky', 'purple'],

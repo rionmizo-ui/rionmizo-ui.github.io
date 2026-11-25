@@ -18,7 +18,6 @@ const PLAN = {
   skeleton:    { act: (s, i) => i % 4 ? null : (s.dirt ? 'clean' : 'touch'), gap: 6 },
   idol:        { act: s => want(s) || (s.satiety < 8 ? 'feed' : 'touch') },
   overeat:     { act: s => s.satiety < 16 ? 'feed' : 'touch' },
-  cramped:     { act: s => 'feed' },
   fishman:     { act: s => s.satiety < 4 ? 'feed' : 'touch' },
   oldage:      { act: s => want(s) },
 };

@@ -19,8 +19,8 @@ const { pathToFileURL } = require('node:url');
       document.querySelectorAll('.tank').forEach(tank => tank.remove());
       (window.__games || []).forEach(game => game.stop());
       const cases = GoldfishLogic.CAUSES.map(({ id }) => ({ id }));
-      if (cases.length !== 50 || new Set(cases.map(({ id }) => id)).size !== 50) {
-        throw new Error('Expected 50 distinct causes');
+      if (cases.length !== 49 || new Set(cases.map(({ id }) => id)).size !== 49) {
+        throw new Error('Expected 49 distinct causes');
       }
       return [...cases, { id: 'bird', touch: 'rocket' }];
     });
