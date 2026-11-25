@@ -244,6 +244,7 @@ var GoldfishGame = (function () {
   function press(btn) {
     A.init();
     flashButton(btn);
+    if (mini && mode === 'play') { miniPress(); return; }
     if (mode !== 'zukan' && (mode === 'play' || mode === 'dead') && (btn === 'feed' || btn === 'net')) {
       if (pendingBtn && pendingBtn.btn !== btn && T - pendingBtn.t <= COMBO_WIN) { pendingBtn.cancel = true; pendingBtn = null; openZukanPaused(); return; }
       const pb = { btn, t: T, cancel: false }; pendingBtn = pb;
@@ -257,8 +258,8 @@ var GoldfishGame = (function () {
   function openZukan(from) { zukanFrom = from; mode = 'zukan'; zukanDetail = false; const i = L.CAUSES.findIndex(c => c.id === causeId); zukanCur = i >= 0 ? i : 0; sfx('card'); }
   function openZukanPaused() { openZukan(mode); }
   function pressNow(btn) {
+    if (mini && mode === 'play') { miniPress(); return; }
     try { g.press(btn, T); } catch (e) {}
-    if (mini && mode === 'play') { miniPress(); return; }   // ミニゲーム中はどのボタンでも「ぱくっ」
     if (mgInvite && mode === 'play') { if (btn === 'touch' && !busy) { startMini(); return; } mgInvite = null; thought = null; }
     if (ev && !ev.result && mode === 'play') { ev.result = btn === ev.need ? 'ok' : 'fail'; return; }   // 特殊イベント中は、押したボタンで結果が決まる
     if (mode === 'title') { if (bootT < 0) boot(); return; }
@@ -1341,7 +1342,7 @@ var GoldfishGame = (function () {
   const EV_KINDS = ['cat', 'blackout', 'quake', 'mystery', 'ufo', 'chef', 'meteor', 'ghost', 'hook', 'heat', 'camera', 'magic'];
   const EVENT_OF_CAUSE = { jumpout: 'quake', abducted: 'ufo', sushi: 'chef', meteor: 'meteor', possessed: 'ghost', fished: 'hook', boiled: 'heat', photo: 'camera', pigeon: 'magic' };
   function updateEvent() {
-    if (mode !== 'play' || busy || ev || gest || T < evAt || g.s.gauge < 1) return;
+    if (mode !== 'play' || busy || ev || gest || mgInvite || T < evAt || g.s.gauge < 1) return;
     startEvent(forceEvent || EV_KINDS[Math.random() * EV_KINDS.length | 0]);
   }
   function startEvent(kind) {
@@ -1872,7 +1873,7 @@ var GoldfishGame = (function () {
   function updateVisitor(dt, idle) {
     if (mode !== 'play') { if (visitor && mode !== 'dead') visitor = null; return; }
     if (!visitor) {
-      if (idle && !gest && T > visitAt) {
+      if (idle && !gest && !mgInvite && T > visitAt) {
         const kind = forceVisitor || VISITORS[Math.random() * VISITORS.length | 0];
         const from = Math.random() < 0.5 ? -1 : 1;
         visitor = kind === 'snail' ? { kind, x: rnd(30, 130), y: WATER + 4, vx: rnd(-3, 3), vy: 7, t0: T }
@@ -2833,10 +2834,10 @@ var GoldfishGame = (function () {
     if (!idle && gest) endGesture();
     if (!idle) gestAt = Math.max(gestAt, T + rnd(3, 6));   // 世話のあとはしばらく泳ぐ（v20: 5〜9→3〜6秒）
     updateOmen(); updateMiniInvite();
-    if (idle && !gest && T > leftAt && g.s.satiety + 1 <= L.SATIETY_MAX && leftovers().length) {   // 残った粒は、おなかがすいたら拾いに行く
+    if (idle && !gest && !mgInvite && T > leftAt && g.s.satiety + 1 <= L.SATIETY_MAX && leftovers().length) {   // 残った粒は、おなかがすいたら拾いに行く
       leftAt = T + 3; fish.wps = []; gest = { it: gLeftover(), wait: 0, cond: null };
     }
-    if (idle && !gest && T > gestAt && !(fish.wps && fish.wps.length)) {
+    if (idle && !gest && !mgInvite && T > gestAt && !(fish.wps && fish.wps.length)) {
       gestAt = T + rnd(10, 18);   // v18: 14〜26→10〜18秒
       if (T < restUntil || Math.random() < 0.65) startGesture();   // v20: ひと休み中は必ず
     }
@@ -2914,7 +2915,7 @@ var GoldfishGame = (function () {
       }
     }
     try { g.tick(dt, idle); } catch (e) {}
-    if (mode === 'play' && A.song && A.song !== 'card') {   // 状態で曲を切りかえる（数秒ごとに判定）
+    if (mode === 'play' && !mini && A.song && A.song !== 'card') {   // 状態で曲を切りかえる（数秒ごとに判定）
       if (!(T < songCheckAt)) {
         songCheckAt = T + 3;
         const st = g.s, pinch = st.satiety <= 2 || st.dirt >= 4 || st.stress >= 85;
@@ -2984,6 +2985,7 @@ var GoldfishGame = (function () {
     for (const p2 of ghostPellets) S.drawPellet(ctx, Math.round(p2.x), Math.round(p2.y), 'normal', T);
     if (mpel) { if (mpel.follow) { mpel.x = mpel.follow.x; mpel.y = mpel.follow.y; } if (S.drawMysteryPellet) S.drawMysteryPellet(ctx, Math.round(mpel.x), Math.round(mpel.y), T); }
     if (hoop && S.drawFingerHoop) S.drawFingerHoop(ctx, Math.round(hoop.x), Math.round(hoop.y), T);
+    if (mini && mini.sweep) drawMiniNet(S.drawNetBack);
     if (net && S.drawNetBack) netDraw(S.drawNetBack);
     if (eyeball) S.drawEyeball(ctx, Math.round(eyeball.x), Math.round(eyeball.y));
     if (xo.decoy) for (const q of xo.decoy) S.drawPellet(ctx, Math.round(q.x), Math.round(q.y), 'normal', T);
@@ -3010,6 +3012,7 @@ var GoldfishGame = (function () {
     if (paw) S.drawCatPaw(ctx, Math.round(paw.x), Math.round(paw.y), { fish: !!paw.fish, t: T });
     if (nozzle) S.drawNozzle(ctx, Math.round(nozzle.x), Math.round(nozzle.y), { suck: true, tail: !fish.vis, t: T });
     if (brush) { ctx.save(); ctx.translate(Math.round(brush.a), 0); S.drawBrush(ctx, Math.round(brush.x), Math.round(brush.y), T); ctx.restore(); }
+    if (mini && mini.sweep) drawMiniNet(S.drawNetFront);
     if (net) {
       if (S.drawNetFront) netDraw(S.drawNetFront);
       else S.drawNet(ctx, Math.round(net.x), Math.round(net.y), (net.sag || 0) > 0.5);
@@ -3111,19 +3114,61 @@ var GoldfishGame = (function () {
     if (tip > WATER) { ctx.fillStyle = '#e8fff8'; ctx.fillRect(x - 10, WATER, 3, 1); ctx.fillRect(x + 8, WATER, 3, 1); }
   }
 
-  // ---------------- ミニゲーム「ぱくっとキャッチ」（ボタン1つ。落ちてくる粒が口に来た瞬間に押す） ----------------
-  const MG_N = 10;
+  // ---------------- ミニゲーム ----------------
+  const MG_N = 10, MG_Y = 168, PUFF_STOP = 1.2, JUMP_TIME = 0.82;
+  const MINI_GAMES = {
+    mini: { title: 'ぱくっとキャッチ', lines: ['口に来たら おす！'] },
+    'mini-puff': { title: 'ふくらめ！チキンレース', lines: [
+      'どのボタンでも おすと ふくらむ',
+      'はじけるまえに 1.2秒 おさずに まつ',
+      'はじける線に ちかいほど 高ランク！',
+    ] },
+    'mini-net': { title: 'よけろ！網', lines: [
+      'どのボタンでも ジャンプ！',
+      'よこからくる 網を よけよう',
+      '10回きたら おわり。3回つかまっても おわり',
+    ] },
+  };
+  const MINI_KEYS = Object.keys(MINI_GAMES);
+  const miniRank = n => n >= 10 ? 'S' : n >= 8 ? 'A' : n >= 5 ? 'B' : 'C';
+
   function updateMiniInvite() {
     if (mgInvite && T > mgInvite.until) { mgInvite = null; thought = null; }
-    if (mode !== 'play' || (cfg.demo && !demoInvite) || busy || ev || gest || mgInvite || !fish.vis || T < mgAt || g.s.gauge < 2) return;
+    if (mode !== 'play' || (cfg.demo && !demoInvite) || busy || ev || gest || visitor || mgInvite || !fish.vis || T < mgAt || g.s.gauge < 2) return;
     mgAt = T + rnd(70, 110);
-    mgInvite = { t: T, until: T + 4.5 };
+    mgInvite = { kind: demoInvite || MINI_KEYS[Math.random() * MINI_KEYS.length | 0], until: T + 4.5 };
     thought = { icon: 'heart', until: T + 4.5 }; sfx('hint'); fish.sq = 1;
   }
-  function startMini() { mgInvite = null; thought = null; if (gest) endGesture(); busy = true; queued = null; fish.cruise = false;
-    startTask(function* () { yield* actMini(); busy = false; mgAt = T + rnd(80, 120); try { g.save && g.save(); } catch (e) {} afterAction(); }); }
+  function startMini() {
+    const kind = mgInvite.kind;
+    mgInvite = null; thought = null;
+    if (gest) endGesture();
+    busy = true; queued = null; fish.cruise = false; fish.wps = [];
+    const m = mini = { kind, n: 0, hits: 0, perfect: 0, phase: 'intro',
+      say(s, c) { this.msg = { s, c, t: T }; } };
+    startTask(function* () {
+      yield* actMini(m);
+      busy = false; mgAt = T + rnd(80, 120);
+      try { g.save && g.save(); } catch (e) {}
+      afterAction();
+    });
+  }
   function miniPress() {
-    const m = mini; if (!m || !m.cur || m.cur.done || m.phase !== 'play') return;
+    const m = mini;
+    if (!m || m.phase !== 'play') return;
+    if (m.kind === 'mini-puff') {
+      if (m.pressure >= 1) return;
+      m.pressure = Math.min(1, m.pressure + 0.135);
+      m.lastPress = T; sfx('bubble');
+      return;
+    }
+    if (m.kind === 'mini-net') {
+      if (m.sweep && !m.sweep.caught && T - m.jumpAt >= JUMP_TIME) {
+        m.jumpAt = T; sfx('jump');
+      }
+      return;
+    }
+    if (!m.cur || m.cur.done) return;
     const c = m.cur, d = c.y - mouthY();
     c.done = true; fish.eatT = T; fish.mouth = 'o'; setTimeoutT(() => { fish.mouth = 0; }, 0.12);
     if (c.bad) { m.say('ぺっ！', '#b06bff'); sfx('nope'); fish.ex = { eyes: 'x', mouth: 'tongue' }; g.addStress(4); c.gone = true; return; }
@@ -3132,49 +3177,137 @@ var GoldfishGame = (function () {
     else if (Math.abs(d) <= 10) { m.hits++; m.say('ナイス！', '#ff9a3c'); sfx('eat'); c.gone = true; fish.chewUntil = T + 0.4; fish.ex = { eyes: 'closed' }; }
     else { m.say(d < 0 ? 'はやい！' : 'おそい！', '#9fd8ff'); sfx('buzz'); fish.ex = { eyes: 'teary', brows: 'worried' }; }
   }
-  function* actMini() {
-    mini = { n: 0, hits: 0, perfect: 0, cur: null, phase: 'intro', msg: null,
-      say(s, c) { this.msg = { s, c, t: T }; } };
+  function* actMini(m) {
     A.setSong('happy');
-    fish.free = true; fish.speed = 60; fish.turn = 6; fish.ex = {}; fish.look = null;
-    fish.tx = 58; fish.ty = 168; fish.dir = 1;
-    yield () => Math.hypot(fish.x - fish.tx, fish.y - fish.ty) < 3;
+    fish.ex = {}; fish.look = null;
+    yield* swimTo(m.kind === 'mini' ? 58 : 80, MG_Y, 60);
     fish.free = false; fish.dir = 1; fish.vx = fish.vy = 0;
-    mini.say('ぱくっとキャッチ！', '#ffffff'); yield 1.0;
-    mini.say('口に来たら おす！', '#ffffff'); yield 1.0;
-    mini.phase = 'play';
+    fish.x = fish.tx; fish.y = fish.ty;
+    if (m.kind === 'mini') {
+      m.say('ぱくっとキャッチ！', '#ffffff'); yield 1;
+      m.say(MINI_GAMES.mini.lines[0], '#ffffff'); yield 1;
+    } else {
+      m.showIntro = true; yield 4;
+    }
+    m.phase = 'play';
+    const rank = yield* (m.kind === 'mini-puff' ? playMiniPuff(m)
+      : m.kind === 'mini-net' ? playMiniNet(m) : playMiniCatch(m));
+    m.phase = 'result'; m.rank = rank;
+    let up = 0;
+    if (rank === 'S') up = g.bonus(2); else if (rank === 'A' || rank === 'B') up = g.bonus(1);
+    if (rank !== 'C') g.addStress(-15);
+    m.reward = up > 0 ? 'ゲージ +' + up : rank === 'C' ? 'ざんねん…' : 'ストレス ダウン';
+    sfx(rank === 'C' ? 'nope' : 'fanfare');
+    fish.ex = rank === 'C' ? { eyes: 'teary', mouth: 'pout' } : { eyes: 'happy', blush: true, mark: 'heart' };
+    if (rank === 'S') {
+      fx.push({ k: 'rainbow', t: T, d: 1.0 });
+      if (m.kind === 'mini') yield* gShowOff();
+    }
+    yield 2.4;
+    fish.ex = {}; fish.free = true; mini = null; A.setSong('main');
+  }
+
+  function* playMiniCatch(m) {
     for (let i = 0; i < MG_N; i++) {
-      mini.n = i + 1; fish.ex = { eyes: 'wide', mouth: 'o' }; fish.look = 'up';
+      m.n = i + 1; fish.ex = { eyes: 'wide', mouth: 'o' }; fish.look = 'up';
       const bad = i >= 2 && Math.random() < 0.22;
       const c = { x: mouthX(), y: WATER - 4, vy: 62 + i * 8 + rnd(0, 10), bad, done: false, gone: false };
-      mini.cur = c;
+      m.cur = c;
       yield () => {
         c.x = mouthX();
         if (!c.gone) c.y += c.vy * dtNow;
         if (!c.done && c.y > mouthY() + 11) {   // 通りすぎた
           c.done = true;
-          if (c.bad) { mini.hits++; mini.say('よけた！', '#7fe08a'); sfx('pet'); fish.ex = { eyes: 'smug' }; }
-          else { mini.say('おそい！', '#9fd8ff'); sfx('buzz'); fish.ex = { eyes: 'teary', brows: 'worried' }; }
+          if (c.bad) { m.hits++; m.say('よけた！', '#7fe08a'); sfx('pet'); fish.ex = { eyes: 'smug' }; }
+          else { m.say('おそい！', '#9fd8ff'); sfx('buzz'); fish.ex = { eyes: 'teary', brows: 'worried' }; }
         }
         return c.done && (c.gone || c.y > FLOOR + 6);
       };
-      mini.cur = null; fish.look = null;
+      m.cur = null; fish.look = null;
       yield 0.45;
     }
-    mini.phase = 'result';
-    const h = mini.hits;
-    const rank = h >= 10 ? 'S' : h >= 8 ? 'A' : h >= 5 ? 'B' : 'C';
-    mini.rank = rank;
-    let up = 0;
-    if (rank === 'S') up = g.bonus(2); else if (rank === 'A' || rank === 'B') up = g.bonus(1);
-    if (rank !== 'C') g.addStress(-15);
-    mini.reward = up > 0 ? 'ゲージ +' + up : rank === 'C' ? 'ざんねん…' : 'ストレス ダウン';
-    sfx(rank === 'C' ? 'nope' : 'fanfare');
-    fish.ex = rank === 'C' ? { eyes: 'teary', mouth: 'pout' } : { eyes: 'happy', blush: true, mark: 'heart' };
-    if (rank === 'S') { fx.push({ k: 'rainbow', t: T, d: 1.0 }); yield* gShowOff(); }
-    yield 2.4;
-    fish.ex = {}; fish.free = true; mini = null; A.setSong('main');
+    return miniRank(m.hits);
   }
+
+  function* playMiniPuff(m) {
+    m.pressure = 0;
+    m.lastPress = -Infinity;
+    const until = T + 10;
+    let last = T;
+    yield () => {
+      if (m.pressure >= 1) return true;
+      m.pressure = Math.max(0, m.pressure - (T - last) * 0.035);
+      last = T;
+      fish.opts.balloon = m.pressure >= 0.28;
+      fish.opts.scale = 1 + Math.round(m.pressure * 16) / 20;
+      fish.ex = m.pressure >= 0.8 ? { eyes: 'wide', mouth: 'wavy', sweat: true } : { mouth: 'o' };
+      return T >= until || (m.lastPress > -Infinity && T - m.lastPress >= PUFF_STOP);
+    };
+    const burst = m.pressure >= 1;
+    m.score = burst ? 'はじけちゃった！' : 'ふくらみ ' + Math.floor(m.pressure * 100) + '%';
+    if (burst) {
+      m.phase = 'burst'; m.say('ぽんっ！', '#ffd86a'); sfx('pop'); popFx(fish.x, fish.y);
+      fish.ex = { eyes: 'x', mouth: 'tongue' };
+      yield* tween(1, p => {
+        fish.x = 80 + Math.sin(p * 15) * 62 * (1 - p);
+        fish.y = MG_Y - Math.abs(Math.sin(p * 12)) * 60 * (1 - p);
+        fish.rot = Math.sin(p * 18) * (1 - p) * 1.5;
+        fish.opts.balloon = p < 0.65;
+        fish.opts.scale = Math.round((1.8 - p * 0.8) * 20) / 20;
+      });
+    }
+    fish.opts = {}; fish.rot = 0;
+    return burst ? 'C' : m.pressure >= 0.88 ? 'S' : m.pressure >= 0.72 ? 'A' : m.pressure >= 0.48 ? 'B' : 'C';
+  }
+
+  function* playMiniNet(m) {
+    m.misses = 0; m.jumpAt = -Infinity;
+    const reach = 28;
+    for (let i = 0; i < MG_N && m.misses < 3; i++) {
+      m.n = i + 1;
+      const dir = Math.random() < 0.5 ? 1 : -1;
+      const speed = 125 + i * 18;
+      const sweep = m.sweep = { dir, speed, x: 80 - dir * 108, caught: false };
+      const start = T;
+      yield () => {
+        sweep.x = 80 + dir * ((T - start) * speed - 108);
+        const p = clamp((T - m.jumpAt) / JUMP_TIME, 0, 1);
+        fish.y = MG_Y - Math.sin(Math.PI * p) * 55;
+        sweep.caught = Math.abs(sweep.x - 80) <= reach && fish.y > MG_Y - 25;
+        return sweep.caught || (sweep.x - 80) * dir >= 108;
+      };
+      if (sweep.caught) {
+        m.misses++; m.say('ぎゃっ！', '#ffa7c1'); sfx('buzz');
+        fish.ex = { eyes: 'x', mouth: 'o' };
+        fish.x = sweep.x; fish.y = MG_Y + 5; fish.opts.scale = 0.8;
+        yield 0.24;
+        const x = fish.x;
+        sfx('jump');
+        yield* tween(0.32, p => {
+          fish.x = x + (80 - x) * p;
+          fish.y = MG_Y + 5 * (1 - p) - Math.sin(p * Math.PI) * 33;
+          sweep.x += dir * speed * dtNow;
+        });
+      } else {
+        m.hits++; m.say('よけた！', '#7fe08a'); sfx('pet');
+      }
+      m.sweep = null; m.jumpAt = -Infinity;
+      fish.x = 80; fish.y = MG_Y; fish.opts = {}; fish.ex = {};
+      yield 0.35;
+    }
+    m.score = 'よけた ' + m.hits + ' / ' + MG_N;
+    return miniRank(m.hits);
+  }
+
+  function drawMiniNet(draw) {
+    const sweep = mini.sweep;
+    ctx.save();
+    ctx.translate(Math.round(sweep.x), MG_Y - 6);
+    ctx.scale(-sweep.dir, 1);
+    draw(ctx, 0, 0, { t: T, sag: sweep.caught ? 1 : 0.45, tilt: -0.18, handle: 100 });
+    ctx.restore();
+  }
+
   function drawMini(ctx) {
     if (mgInvite) {
       const blink = ((T * 3) | 0) % 2 === 0;
@@ -3182,7 +3315,7 @@ var GoldfishGame = (function () {
       ctx.fillStyle = '#1d4d4a'; ctx.fillRect(19, Y - 1, 122, 28);
       ctx.fillStyle = blink ? '#ffe9a8' : '#fff8e0'; ctx.fillRect(20, Y, 120, 26);
       ctx.fillStyle = '#ff7aa8'; ctx.fillRect(20, Y, 120, 10);
-      ctx.textAlign = 'center'; ctx.font = 'bold 8px sans-serif'; ctx.fillStyle = '#ffffff'; ctx.fillText('ミニゲーム', 80, Y + 8);
+      ctx.textAlign = 'center'; ctx.font = 'bold 8px sans-serif'; ctx.fillStyle = '#ffffff'; ctx.fillText(MINI_GAMES[mgInvite.kind].title, 80, Y + 8);
       ctx.fillStyle = '#5a2e2e'; ctx.font = 'bold 8px sans-serif'; ctx.fillText('ふれあい で あそぶ', 80, Y + 21);
       const w = Math.max(0, (mgInvite.until - T) / 4.5);
       ctx.fillStyle = '#ff7aa8'; ctx.fillRect(20, Y + 26, Math.round(120 * w), 2);
@@ -3197,9 +3330,25 @@ var GoldfishGame = (function () {
       ctx.save(); ctx.translate(px, py); ctx.scale(2, 2); S.drawPellet(ctx, 0, 0, m.cur.bad ? 'poison' : 'normal', T); ctx.restore();
     }
     ctx.textAlign = 'center';
-    if (m.phase !== 'intro') {
+    if (m.phase === 'intro' && m.showIntro) {
+      const game = MINI_GAMES[m.kind];
+      ctx.fillStyle = '#2a1408'; ctx.fillRect(5, 55, 150, 26 + game.lines.length * 12);
+      ctx.fillStyle = '#fff8e0'; ctx.fillRect(7, 57, 146, 22 + game.lines.length * 12);
+      ctx.fillStyle = '#5a2e2e'; ctx.font = 'bold 10px sans-serif'; ctx.fillText(game.title, 80, 70);
+      ctx.font = 'bold 7px sans-serif';
+      game.lines.forEach((line, i) => ctx.fillText(line, 80, 85 + 12 * i, 138));
+    } else if (m.phase === 'play' || m.phase === 'burst' || (m.phase === 'result' && m.kind === 'mini')) {
       ctx.font = 'bold 8px sans-serif'; ctx.fillStyle = '#1d4d4a'; ctx.fillRect(44, 44, 72, 12);
-      ctx.fillStyle = '#fff8e0'; ctx.fillText('キャッチ ' + m.hits + ' / ' + MG_N, 80, 53);
+      ctx.fillStyle = '#fff8e0'; ctx.fillText(m.kind === 'mini-puff' ? 'ふくらみ' : m.kind === 'mini-net'
+        ? m.n + ' / ' + MG_N + '　ミス ' + m.misses + ' / 3' : 'キャッチ ' + m.hits + ' / ' + MG_N, 80, 53);
+      if (m.kind === 'mini-puff') {
+        ctx.fillStyle = '#2a1408'; ctx.fillRect(15, 61, 130, 12);
+        ctx.fillStyle = '#fff8e0'; ctx.fillRect(17, 63, 126, 8);
+        ctx.fillStyle = m.pressure >= 0.8 ? '#f6a63b' : '#ff7aa8';
+        ctx.fillRect(17, 63, Math.round(123 * m.pressure), 8);
+        ctx.fillStyle = '#b53350'; ctx.fillRect(140, 59, 3, 16);
+        ctx.fillText('はじける線 ▲', 117, 84);
+      }
     }
     if (m.msg && T - m.msg.t < 0.9) {
       const rise = (T - m.msg.t) * 10;
@@ -3210,7 +3359,7 @@ var GoldfishGame = (function () {
     if (m.phase === 'result') {
       ctx.fillStyle = '#1d4d4a'; ctx.fillRect(13, 69, 134, 52);
       ctx.fillStyle = '#fff8e0'; ctx.fillRect(14, 70, 132, 50);
-      ctx.font = 'bold 8px sans-serif'; ctx.fillStyle = '#5a2e2e'; ctx.fillText('けっか ' + m.hits + ' / ' + MG_N + (m.perfect ? '（パーフェクト ' + m.perfect + '）' : ''), 80, 82);
+      ctx.font = 'bold 8px sans-serif'; ctx.fillStyle = '#5a2e2e'; ctx.fillText(m.score || 'けっか ' + m.hits + ' / ' + MG_N + (m.perfect ? '（パーフェクト ' + m.perfect + '）' : ''), 80, 82);
       ctx.font = 'bold 20px sans-serif'; ctx.fillStyle = { S: '#ffb000', A: '#ff5aa0', B: '#4ab8ff', C: '#8a8a8a' }[m.rank]; ctx.fillText(m.rank, 80, 104);
       ctx.font = 'bold 8px sans-serif'; ctx.fillStyle = '#5a2e2e'; ctx.fillText(m.reward, 80, 116);
     }
@@ -3647,18 +3796,29 @@ var GoldfishGame = (function () {
         gestAt = T + 999;
         if (name === 'feed') { runAction('feed'); yield () => !busy; g.s.satiety = 0; yield 1.5; continue; }
         if (name === 'swim') { yield 4; continue; }
-        if (name === 'mini' || name === 'leftover') {
+        if (MINI_KEYS.includes(name) || name === 'leftover') {
           if (name === 'leftover') {   // 満腹で残った粒を、おなかがすいてから拾って食べる
             const sf = g.startFeed; g.startFeed = n => Object.assign(sf.call(g, n), { willEat: false, accident: null, gold: false });
             g.s.satiety = L.SATIETY_MAX; runAction('feed'); yield () => !busy; g.startFeed = sf; yield () => pellets.every(p => p.y > FLOOR - 4 || p.mine); yield 1.5;
             g.s.satiety = 8; leftAt = 0; yield () => !!gest; yield () => !gest; yield 2; continue;
           }
-          g.s.gauge = Math.max(2, g.s.gauge); mgAt = T; mgInvite = null;
-          demoInvite = true; yield () => !!mgInvite; demoInvite = false;
+          g.s.gauge = 2; mgAt = T; mgInvite = null;
+          visitAt = T + 999;
+          demoInvite = name; yield () => !!mgInvite; demoInvite = false;
           yield 1; pressNow('touch'); yield () => !!mini;
           let k = 0;
           yield () => {   // お手本：だいたい当てて、ときどき外す・毒はよける
             if (!mini) return true;
+            if (mini.phase !== 'play') return false;
+            if (name === 'mini-puff') {
+              if (!k && T - mini.lastPress >= 0.08) { miniPress(); if (mini.pressure >= 0.88) k = 1; }
+              return false;
+            }
+            if (name === 'mini-net') {
+              const sweep = mini.sweep;
+              if (sweep && (80 - sweep.x) * sweep.dir / sweep.speed <= JUMP_TIME / 2 && (80 - sweep.x) * sweep.dir > 0) miniPress();
+              return false;
+            }
             const c = mini.cur;
             if (c && !c.done && !c.bad && Math.abs(c.y - mouthY()) <= (k % 4 === 3 ? 9 : 3)) { k++; miniPress(); }
             return false;
